@@ -129,19 +129,11 @@ class DeepCoDER(Model):
 
     @staticmethod
     def _loss_function(inp, decoded):
-        # y_true = K.reshape(inp, (-1, K.shape(inp)[-1]))
-        # y_pred = K.reshape(decoded, (-1, K.shape(inp)[-1]))
-        # loss = K.mean(categorical_crossentropy(y_true, y_pred))
-        loss = mean_squared_error(y_true=inp, y_pred=decoded)
-        return loss
+        return mean_squared_error(y_true=inp, y_pred=decoded)
 
     @staticmethod
     def mean_cat_acc(inp, decoded):
         return mean_cat_acc(inp, decoded)
-        # y_true = K.reshape(inp, (-1, K.shape(inp)[-1]))
-        # y_pred = K.reshape(decoded, (-1, K.shape(inp)[-1]))
-        # cat_acc = categorical_accuracy(y_true, y_pred)
-        # return cat_acc
 
 
 class DeepCoFAM(Model):
