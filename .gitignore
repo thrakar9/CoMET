@@ -1,5 +1,4 @@
-# Large files
-datasets/
+# Visuals
 motifs/
 embeddings/
 
@@ -58,3 +57,4 @@ docs/_build/
 
 # PyBuilder
 target/
+
