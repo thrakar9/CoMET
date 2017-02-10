@@ -2,7 +2,7 @@
 source ${HOME}/.bashrc
 workon py3Evolutron
 
-dataset=ecoli
+dataset=crispr
 echo "Calculating all motifs for" ${dataset}
 
 for f in models/${dataset}/*.model ;do

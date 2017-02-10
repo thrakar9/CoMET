@@ -2,7 +2,7 @@
 source ${HOME}/.bashrc
 workon py3Evolutron
 
-dataset=ecoli
+dataset=$1
 echo "Calculating all embeddings for" ${dataset}
 
 for f in models/${dataset}/*.history.npz ;do
