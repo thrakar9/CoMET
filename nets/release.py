@@ -22,6 +22,7 @@ from evolutron.networks.extra_layers import Convolution1D, MaxPooling1D, Dense, 
 from evolutron.networks.extra_layers import Dedense, Unpooling1D, Deconvolution1D
 from evolutron.networks.krs.extra_metrics import mean_cat_acc
 
+
 class DeepCoDER(Model):
     def __init__(self, input, output, name=None):
         super(DeepCoDER, self).__init__(input, output, name)

@@ -2,6 +2,8 @@
 motifs/
 embeddings/
 
+.ipynb_checkpoints/
+
 # Pycharm specific
 .idea/
 
