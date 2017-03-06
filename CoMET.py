@@ -21,9 +21,6 @@ import time
 import numpy as np
 from keras.utils.np_utils import to_categorical
 
-# seed = 7
-# np.random.seed(seed)
-
 # Check if package is installed, else fallback to developer mode imports
 try:
     from evolutron.motifs import motif_extraction
@@ -37,6 +34,9 @@ except ImportError:
     from evolutron.engine import DeepTrainer
 
 import nets
+
+seed = 7
+np.random.seed(seed)
 
 
 def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10, validation=.2,
@@ -141,7 +141,6 @@ def main(mode, **options):
     if mode == 'unsupervised':
         dataset = load_dataset(**dataset_options)
         unsupervised(dataset, handle, **options)
-        return
     elif mode == 'family':
         dataset = load_dataset(**dataset_options, codes=True)
         family(dataset, handle, **options)
