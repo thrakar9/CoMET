@@ -4,6 +4,8 @@ embeddings/
 
 .ipynb_checkpoints/
 
+logs/
+
 # Pycharm specific
 .idea/
 
