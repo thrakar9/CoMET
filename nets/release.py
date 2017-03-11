@@ -18,7 +18,9 @@ from keras.metrics import categorical_accuracy
 from keras.models import Model, load_model
 from keras.objectives import mean_squared_error, categorical_crossentropy
 
-from evolutron.networks.extra_layers import Convolution1D, MaxPooling1D, Dense, Flatten, Reshape  # To implement masking
+from keras.layers import Convolution1D, MaxPooling1D, Dense, Flatten, Reshape
+
+# from evolutron.networks.extra_layers import Convolution1D, MaxPooling1D, Dense, Flatten, Reshape  # To implement masking
 from evolutron.networks.extra_layers import Dedense, Unpooling1D, Deconvolution1D
 from evolutron.networks.krs.extra_metrics import mean_cat_acc
 
@@ -58,14 +60,12 @@ class DeepCoDER(Model):
         # Input LayerRO
         inp = Input(shape=input_shape, name='aa_seq')
 
-        mask = Masking(mask_value=0.0)(inp)
-
         # Convolutional Layers
         convs = [Convolution1D(nb_filter, filter_length,
                                init='glorot_uniform',
                                activation='relu',
                                border_mode='same',
-                               name='Conv1')(mask)]
+                               name='Conv1')(inp)]
 
         for c in range(1, n_conv_layers):
             convs.append(Convolution1D(nb_filter, filter_length,
@@ -122,7 +122,7 @@ class DeepCoDER(Model):
                                            name='Deconv{}'.format(c + 1))(deconvs[-1]))  # maybe add L1 regularizer
 
         decoded = Deconvolution1D(convs[0]._keras_history[0],
-                                  apply_mask=True,
+                                  apply_mask=False,
                                   activation='sigmoid',
                                   name='Deconv1')(deconvs[-1])
 
@@ -130,11 +130,15 @@ class DeepCoDER(Model):
 
     @staticmethod
     def _loss_function(inp, decoded):
+        boolean_mask = K.any(K.not_equal(inp, 0.0),
+                             axis=-1, keepdims=True)
+        decoded = decoded * K.cast(boolean_mask, K.floatx())
         return mean_squared_error(y_true=inp, y_pred=decoded)
 
     @staticmethod
     def mean_cat_acc(inp, decoded):
-        return mean_cat_acc(inp, decoded)
+        # mean_cat_acc(y_pred=decoded, y_true=inp)
+        return categorical_accuracy(y_true=inp, y_pred=decoded)
 
 
 class DeepCoFAM(Model):
