@@ -24,11 +24,10 @@ from keras.utils.np_utils import to_categorical
 # Check if package is installed, else fallback to developer mode imports
 try:
     from evolutron.motifs import motif_extraction
-    from evolutron.tools import load_dataset, none2str, Handle, get_args
+    from evolutron.tools import load_dataset, none2str, Handle, shape, get_args
     from evolutron.engine import DeepTrainer
 except ImportError:
-
-    sys.path.insert(0, os.path.abspath('..'))
+    sys.path.insert(0, os.path.abspath('../Evolutron'))
     from evolutron.motifs import motif_extraction
     from evolutron.tools import load_dataset, none2str, Handle, shape, get_args
     from evolutron.engine import DeepTrainer
@@ -86,8 +85,9 @@ def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10
     # motif_extraction(conv_net.custom_fun(), x_data, handle)
 
 
-def unsupervised(x_data, handle, epochs=1, batch_size=1, filters=30, filter_length=10, validation=.2,
+def unsupervised(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10, validation=.2,
                  optimizer='nadam', rate=.01, conv=1, fc=1, model=None):
+    x_data = dataset[0]
     # Find input shape
     if type(x_data) == np.ndarray:
         input_shape = x_data[0].shape
@@ -119,7 +119,7 @@ def unsupervised(x_data, handle, epochs=1, batch_size=1, filters=30, filter_leng
                  batch_size=batch_size,
                  validate=validation,
                  patience=20)
-
+    print(handle)
     conv_net.save_train_history(handle)
     conv_net.save_model_to_file(handle)
 

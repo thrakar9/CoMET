@@ -12,17 +12,13 @@
     liability.
 """
 import keras.backend as K
+from keras.layers import Convolution1D, MaxPooling1D, Dense, Flatten, Reshape
 from keras.layers import Input
-from keras.layers import Masking
 from keras.metrics import categorical_accuracy
 from keras.models import Model, load_model
 from keras.objectives import mean_squared_error, categorical_crossentropy
 
-from keras.layers import Convolution1D, MaxPooling1D, Dense, Flatten, Reshape
-
-# from evolutron.networks.extra_layers import Convolution1D, MaxPooling1D, Dense, Flatten, Reshape  # To implement masking
-from evolutron.networks.extra_layers import Dedense, Unpooling1D, Deconvolution1D
-from evolutron.networks.krs.extra_metrics import mean_cat_acc
+from evolutron.networks import Dedense, Unpooling1D, Deconvolution1D
 
 
 class DeepCoDER(Model):
