@@ -49,7 +49,6 @@ def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10
     else:
         raise TypeError('Something went wrong with the dataset type')
 
-    print(type(y_data))
     y_data = to_categorical(y_data)
 
     output_dim = y_data.shape[1]
