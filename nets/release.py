@@ -18,7 +18,7 @@ from keras.metrics import categorical_accuracy
 from keras.models import Model, load_model
 from keras.objectives import mean_squared_error, categorical_crossentropy
 
-from evolutron.networks import Dedense, Unpooling1D, Deconvolution1D
+from evolutron.networks import Dedense, Upsampling1D, Deconvolution1D
 
 
 class DeepCoDER(Model):
@@ -57,22 +57,24 @@ class DeepCoDER(Model):
         inp = Input(shape=input_shape, name='aa_seq')
 
         # Convolutional Layers
-        convs = [Convolution1D(nb_filter, filter_length,
-                               init='glorot_uniform',
+        convs = [Convolution1D(filters=nb_filter,
+                               kernel_size=filter_length,
+                               kernel_initializer='glorot_uniform',
                                activation='relu',
-                               border_mode='same',
+                               padding='same',
                                name='Conv1')(inp)]
 
         for c in range(1, n_conv_layers):
-            convs.append(Convolution1D(nb_filter, filter_length,
-                                       init='glorot_uniform',
+            convs.append(Convolution1D(filters=nb_filter,
+                                       kernel_size=filter_length,
+                                       kernel_initializer='glorot_uniform',
                                        activation='relu',
-                                       border_mode='same',
+                                       padding='same',
                                        name='Conv{}'.format(c + 1))(convs[-1]))  # maybe add L1 regularizer
 
         # Max-pooling
         if seq_length:
-            max_pool = MaxPooling1D(pool_length=seq_length)(convs[-1])
+            max_pool = MaxPooling1D(pool_size=seq_length)(convs[-1])
             flat = Flatten()(max_pool)
         else:
             # max_pool = GlobalMaxPooling1D()(convs[-1])
@@ -81,13 +83,13 @@ class DeepCoDER(Model):
 
         # Fully-Connected encoding layers
         fc_enc = [Dense(nb_filter,
-                        init='glorot_uniform',
+                        kernel_initializer='glorot_uniform',
                         activation='sigmoid',
                         name='FCEnc1')(flat)]
 
         for d in range(1, n_fc_layers):
             fc_enc.append(Dense(nb_filter,
-                                init='glorot_uniform',
+                                kernel_initializer='glorot_uniform',
                                 activation='sigmoid',
                                 name='FCEnc{}'.format(d + 1))(fc_enc[-1]))
 
@@ -109,7 +111,7 @@ class DeepCoDER(Model):
         else:
             unflat = Reshape((1, fc_dec[-1]._keras_shape[-1]))(fc_dec[-1])
 
-        deconvs = [Unpooling1D(max_pool._keras_history[0], name='Unpooling')(unflat)]
+        deconvs = [Upsampling1D(max_pool._keras_history[0].input_shape[1], name='Upsampling')(unflat)]
 
         # Deconvolution
         for c in range(n_conv_layers - 1, 0, -1):
@@ -187,7 +189,7 @@ class DeepCoFAM(Model):
 
         # Max-pooling
         if seq_length:
-            max_pool = MaxPooling1D(pool_length=seq_length)(convs[-1])
+            max_pool = MaxPooling1D(pool_size=seq_length)(convs[-1])
             flat = Flatten()(max_pool)
         else:
             # max_pool = GlobalMaxPooling1D()(convs[-1])
