@@ -174,17 +174,19 @@ class DeepCoFAM(Model):
         inp = Input(shape=input_shape, name='aa_seq')
 
         # Convolutional Layers
-        convs = [Convolution1D(nb_filter, filter_length,
-                               init='glorot_uniform',
+        convs = [Convolution1D(filters=nb_filter,
+                               kernel_size=filter_length,
+                               kernel_initializer='glorot_uniform',
                                activation='relu',
-                               border_mode='same',
+                               padding='same',
                                name='Conv1')(inp)]
 
         for c in range(1, n_conv_layers):
-            convs.append(Convolution1D(nb_filter, filter_length,
-                                       init='glorot_uniform',
+            convs.append(Convolution1D(filters=nb_filter,
+                                       kernel_size=filter_length,
+                                       kernel_initializer='glorot_uniform',
                                        activation='relu',
-                                       border_mode='same',
+                                       padding='same',
                                        name='Conv{}'.format(c + 1))(convs[-1]))  # maybe add L1 regularizer
 
         # Max-pooling
@@ -198,20 +200,20 @@ class DeepCoFAM(Model):
 
         # Fully-Connected encoding layers
         fc_enc = [Dense(nb_filter,
-                        init='glorot_uniform',
+                        kernel_initializer='glorot_uniform',
                         activation='sigmoid',
                         name='FCEnc1')(flat)]
 
         for d in range(1, n_fc_layers):
             fc_enc.append(Dense(nb_filter,
-                                init='glorot_uniform',
+                                kernel_initializer='glorot_uniform',
                                 activation='sigmoid',
                                 name='FCEnc{}'.format(d + 1))(fc_enc[-1]))
 
         encoded = fc_enc[-1]  # To access if model for encoding needed
 
         classifier = Dense(output_dim,
-                           init='glorot_uniform',
+                           kernel_initializer='glorot_uniform',
                            activation='softmax',
                            name='Classifier')(encoded)
 

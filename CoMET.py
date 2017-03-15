@@ -49,6 +49,7 @@ def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10
     else:
         raise TypeError('Something went wrong with the dataset type')
 
+    print(type(y_data))
     y_data = to_categorical(y_data)
 
     output_dim = y_data.shape[1]
@@ -73,7 +74,7 @@ def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10
     print('Started training at {}'.format(time.asctime()))
 
     conv_net.fit(x_data, y_data,
-                 nb_epoch=epochs,
+                 epochs=epochs,
                  batch_size=batch_size,
                  validate=validation,
                  patience=50)
@@ -115,7 +116,7 @@ def unsupervised(dataset, handle, epochs=1, batch_size=1, filters=30, filter_len
     print('Started training at {}'.format(time.asctime()))
 
     conv_net.fit(x_data, x_data,
-                 nb_epoch=epochs,
+                 epochs=epochs,
                  batch_size=batch_size,
                  validate=validation,
                  patience=20)
@@ -142,7 +143,7 @@ def main(mode, **options):
         dataset = load_dataset(**dataset_options)
         unsupervised(dataset, handle, **options)
     elif mode == 'family':
-        dataset = load_dataset(**dataset_options, codes=True)
+        dataset = load_dataset(**dataset_options, codes=True, code_key='fam')
         family(dataset, handle, **options)
     else:
         raise IOError('Invalid mode of operation.')
