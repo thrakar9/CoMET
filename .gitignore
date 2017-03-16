@@ -6,6 +6,8 @@ embeddings/
 .ipynb_checkpoints/
 logs/
 
+sync2database.py
+
 # Pycharm specific
 .idea/
 
