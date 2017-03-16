@@ -21,7 +21,7 @@ try:
     from evolutron.tools.data_tools import pad_or_clip_seq
 except ImportError:
 
-    sys.path.insert(0, os.path.abspath('..'))
+    sys.path.insert(0, os.path.abspath('../Evolutron'))
     from evolutron.engine import DeepTrainer
     from evolutron.networks import custom_layers
     from evolutron.tools import aa2hot, Handle, load_dataset, shape, file_db
@@ -31,22 +31,22 @@ except ImportError:
 def calculate_embeddings(model, proteins=None):
     handle = Handle.from_filename(model)
 
-    if not proteins:
-        proteins = pd.read_hdf('datasets/' + file_db[handle.dataset].split('.')[0] + '.h5', 'raw_data')
-
-    x_data = proteins.sequence.apply(aa2hot).tolist()
-    max_aa = int(np.percentile([len(x) for x in x_data], 99))
-    x_data = np.asarray([pad_or_clip_seq(x, max_aa) for x in x_data])
-
     # Load model architecture, build model and then load trained weights.
     with h5py.File(model) as hf:
         model_config = hf.attrs['model_config'].decode('utf8')
     net = DeepTrainer(model_from_json(model_config, custom_objects=custom_layers))
     net.load_all_param_values(model)
 
+    if not proteins:
+        proteins = pd.read_hdf(file_db[handle.dataset].split('.')[0] + '.h5', 'raw_data')
+
+    x_data = proteins.sequence.apply(aa2hot).tolist()
+    max_aa = net.input._keras_shape[1]
+    x_data = np.asarray([pad_or_clip_seq(x, max_aa) for x in x_data])
+
     code_layer = [layer for layer in net.get_all_layers() if layer.name.find('FCEnc') == 0][-1]
 
-    embed_fun = K.function(inputs=[net.input], outputs=code_layer.output)
+    embed_fun = K.function(inputs=[net.input], outputs=[code_layer.output])
 
     emb = np.asarray([embed_fun([[x]]) for x in x_data]).squeeze()
 
@@ -69,7 +69,7 @@ def main(model, tsne=True, html=True, pdf=False, pca=False):
         emb = calculate_embeddings(model)
         print('Generated embeddings')
 
-    proteins = pd.read_hdf('datasets/' + file_db[handle.dataset].split('.')[0] + '.h5', 'raw_data')
+    proteins = pd.read_hdf(file_db[handle.dataset].split('.')[0] + '.h5', 'raw_data')
     embeddings = pd.DataFrame(emb, index=proteins.index, columns=['Emb{}'.format(i) for i in range(emb.shape[1])])
     assert (len(embeddings) == len(proteins))
 

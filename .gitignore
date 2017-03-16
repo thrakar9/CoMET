@@ -1,9 +1,9 @@
 # Visuals
 motifs/
+models/
 embeddings/
 
 .ipynb_checkpoints/
-
 logs/
 
 # Pycharm specific
