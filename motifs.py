@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-from __future__ import division
-
-
 import argparse
 import h5py
 import os
@@ -41,14 +37,16 @@ def main(filename, data_id):
     if data_id == 'model':
         data_id = handle.dataset
 
-    x_data = load_dataset(data_id, padded=False)
+    x_data, y_data = load_dataset(data_id, padded=True, max_aa=net.input._keras_shape[1])
 
     conv_layers = net.get_conv_layers()
 
     for depth, conv_layer in enumerate(conv_layers):
-        conv_scores = conv_layer.output  # Changed from -1 to 0
-
+        conv_scores = conv_layer.output
         # Compile function that spits out the outputs of the correct convolutional layer
+        boolean_mask = K.any(K.not_equal(net.input, 0.0), axis=-1, keepdims=True)
+        conv_scores = conv_scores * K.cast(boolean_mask, K.floatx())
+
         custom_fun = K.function([net.input], [conv_scores])
         # Start visualizations
         motif_extraction(custom_fun, x_data, conv_layer.filters,

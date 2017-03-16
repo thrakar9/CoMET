@@ -141,6 +141,7 @@ class DeepCoDER(Model):
         # return c/K.sum(boolean_mask)
         return mean_cat_acc(y_true=inp, y_pred=decoded)
 
+
 class DeepCoFAM(Model):
     def __init__(self, input, output, name=None):
         super(DeepCoFAM, self).__init__(input, output, name)
