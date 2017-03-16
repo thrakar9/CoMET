@@ -19,7 +19,7 @@ try:
     from evolutron.motifs import motif_extraction
     from evolutron.networks import custom_layers
 except ImportError:
-    sys.path.insert(0, os.path.abspath('..'))
+    sys.path.insert(0, os.path.abspath('../Evolutron'))
     from evolutron.engine import DeepTrainer
     from evolutron.tools import load_dataset, Handle, shape
     from evolutron.motifs import motif_extraction
@@ -49,10 +49,10 @@ def main(filename, data_id):
         conv_scores = conv_layer.output  # Changed from -1 to 0
 
         # Compile function that spits out the outputs of the correct convolutional layer
-        custom_fun = K.function([net.input], conv_scores)
+        custom_fun = K.function([net.input], [conv_scores])
         # Start visualizations
-        motif_extraction(custom_fun, x_data, conv_layer.nb_filter,
-                         conv_layer.filter_length, handle, depth)
+        motif_extraction(custom_fun, x_data, conv_layer.filters,
+                         conv_layer.kernel_size[0], handle, depth)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Network visualization module.')
