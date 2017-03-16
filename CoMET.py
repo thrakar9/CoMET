@@ -11,8 +11,6 @@
     For more information contact:
     karydis [at] mit.edu
 """
-from __future__ import print_function, division, absolute_import
-
 import argparse
 import os
 import sys
@@ -76,7 +74,7 @@ def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10
                  epochs=epochs,
                  batch_size=batch_size,
                  validate=validation,
-                 patience=50)
+                 patience=10)
 
     conv_net.save_train_history(handle)
     conv_net.save_model_to_file(handle)

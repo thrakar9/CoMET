@@ -16,9 +16,10 @@ from keras.layers import Convolution1D, MaxPooling1D, Dense, Flatten, Reshape
 from keras.layers import Input
 from keras.metrics import categorical_accuracy
 from keras.models import Model, load_model
-from keras.objectives import mean_squared_error, categorical_crossentropy
+from keras.losses import mean_squared_error, categorical_crossentropy
 
 from evolutron.networks import Dedense, Upsampling1D, Deconvolution1D
+from evolutron.metrics import mean_cat_acc
 
 
 class DeepCoDER(Model):
@@ -128,16 +129,17 @@ class DeepCoDER(Model):
 
     @staticmethod
     def _loss_function(inp, decoded):
-        boolean_mask = K.any(K.not_equal(inp, 0.0),
-                             axis=-1, keepdims=True)
+        boolean_mask = K.any(K.not_equal(inp, 0.0), axis=-1, keepdims=True)
         decoded = decoded * K.cast(boolean_mask, K.floatx())
         return mean_squared_error(y_true=inp, y_pred=decoded)
 
     @staticmethod
     def mean_cat_acc(inp, decoded):
-        # mean_cat_acc(y_pred=decoded, y_true=inp)
-        return categorical_accuracy(y_true=inp, y_pred=decoded)
-
+        # c = categorical_accuracy(y_true=K.reshape(inp, (-1, inp.shape[-1])), y_pred=K.reshape(decoded, (-1, decoded.shape[-1])))
+        # boolean_mask = K.any(K.not_equal(inp, 0.0), axis=-1, keepdims=True)
+        # c = c * K.cast(boolean_mask, K.floatx())
+        # return c/K.sum(boolean_mask)
+        return mean_cat_acc(y_true=inp, y_pred=decoded)
 
 class DeepCoFAM(Model):
     def __init__(self, input, output, name=None):
