@@ -18,6 +18,7 @@ import time
 
 import numpy as np
 from keras.utils.np_utils import to_categorical
+import keras.backend as K
 
 # Check if package is installed, else fallback to developer mode imports
 try:
@@ -37,7 +38,7 @@ np.random.seed(seed)
 
 
 def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10, validation=.2,
-           optimizer='nadam', rate=.01, conv=1, fc=1, model=None):
+           optimizer='nadam', rate=.01, conv=1, fc=1, model=None, motifs=True):
     # Find input shape
     x_data, y_data = dataset
     if type(x_data) == np.ndarray:
@@ -74,17 +75,28 @@ def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10
                  epochs=epochs,
                  batch_size=batch_size,
                  validate=validation,
-                 patience=10)
+                 patience=20)
 
     conv_net.save_train_history(handle)
     conv_net.save_model_to_file(handle)
 
     # Extract the motifs from the convolutional layers
-    # motif_extraction(conv_net.custom_fun(), x_data, handle)
+    if motifs:
+        # TODO: hide custom fun in deep trainer
+        for depth, conv_layer in enumerate(conv_net.get_conv_layers()):
+            conv_scores = conv_layer.output
+            # Compile function that spits out the outputs of the correct convolutional layer
+            boolean_mask = K.any(K.not_equal(conv_net.input, 0.0), axis=-1, keepdims=True)
+            conv_scores = conv_scores * K.cast(boolean_mask, K.floatx())
+
+            custom_fun = K.function([conv_net.input], [conv_scores])
+            # Start visualizations
+            motif_extraction(custom_fun, x_data, conv_layer.filters,
+                             conv_layer.kernel_size[0], handle, depth)
 
 
 def unsupervised(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10, validation=.2,
-                 optimizer='nadam', rate=.01, conv=1, fc=1, model=None):
+                 optimizer='nadam', rate=.005, conv=1, fc=1, model=None, motifs=True):
     x_data = dataset[0]
     # Find input shape
     if type(x_data) == np.ndarray:
@@ -95,7 +107,9 @@ def unsupervised(dataset, handle, epochs=1, batch_size=1, filters=30, filter_len
         raise TypeError('Something went wrong with the dataset type')
 
     if model:
-        conv_net = DeepTrainer(nets.DeepCoDER.from_saved_model(model))
+        net_arch = nets.DeepCoDER.from_handle(input_shape, handle)
+        conv_net = DeepTrainer(net_arch)
+        conv_net.load_all_param_values(model)
         print('Loaded model')
     else:
         print('Building model ...')
@@ -106,8 +120,8 @@ def unsupervised(dataset, handle, epochs=1, batch_size=1, filters=30, filter_len
                                                filter_length=filter_length)
         handle.model = net_arch.name
         conv_net = DeepTrainer(net_arch)
-        conv_net.compile(optimizer=optimizer, lr=rate)
 
+    conv_net.compile(optimizer=optimizer, lr=rate)
     conv_net.display_network_info()
 
     print('Started training at {}'.format(time.asctime()))
@@ -117,18 +131,29 @@ def unsupervised(dataset, handle, epochs=1, batch_size=1, filters=30, filter_len
                  batch_size=batch_size,
                  validate=validation,
                  patience=20)
-    print(handle)
     conv_net.save_train_history(handle)
     conv_net.save_model_to_file(handle)
 
     # Extract the motifs from the convolutional layers
-    # motif_extraction(conv_net.custom_fun(), x_data, handle)
+    if motifs:
+        # TODO: hide custom fun in deep trainer
+        for depth, conv_layer in enumerate(conv_net.get_conv_layers()):
+            conv_scores = conv_layer.output
+            # Compile function that spits out the outputs of the correct convolutional layer
+            boolean_mask = K.any(K.not_equal(conv_net.input, 0.0), axis=-1, keepdims=True)
+            conv_scores = conv_scores * K.cast(boolean_mask, K.floatx())
+
+            custom_fun = K.function([conv_net.input], [conv_scores])
+            # Start visualizations
+            motif_extraction(custom_fun, x_data, conv_layer.filters,
+                             conv_layer.kernel_size[0], handle, depth)
 
 
 def main(mode, **options):
     if 'model' in options:
         handle = Handle.from_filename(options.get('model'))
-        assert handle.program == 'CoMET', 'The model file provided is for another program.'
+        assert handle.ftype == 'model'
+        assert handle.model in ['DeepCoDER', 'DeepCoFAM'], 'The model file provided is for another program.'
     else:
         handle = Handle(**options)
 
@@ -136,10 +161,10 @@ def main(mode, **options):
     print("Loading data...")
     dataset_options = get_args(options, ['data_id', 'padded'])
 
-    if mode == 'unsupervised':
+    if mode == 'unsupervised' or handle.model == 'DeepCoDER':
         dataset = load_dataset(**dataset_options)
         unsupervised(dataset, handle, **options)
-    elif mode == 'family':
+    elif mode == 'family' or handle.model == 'DeepCoFAM':
         dataset = load_dataset(**dataset_options, codes=True, code_key='fam')
         family(dataset, handle, **options)
     else:

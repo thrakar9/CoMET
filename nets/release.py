@@ -37,10 +37,17 @@ class DeepCoDER(Model):
         return cls(**args)
 
     @classmethod
+    def from_handle(cls, aa_length, handle):
+        args = cls._build_network(aa_length, handle.n_convs, handle.n_fc, handle.filters, handle.filter_size)
+
+        return cls(**args)
+
+    @classmethod
     def from_saved_model(cls, filepath):
         cls.__dict__ = load_model(filepath)
         cls.__class__ = DeepCoDER
-        return cls
+        raise NotImplementedError('deserialization of bound layers not supported')
+        # return cls
 
     def save(self, filepath, overwrite=True):
         self.__class__.__name__ = 'Model'

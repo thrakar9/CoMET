@@ -27,6 +27,7 @@ def main(filename, data_id):
     hf = h5py.File(filename)
     model_config = hf.attrs['model_config'].decode('utf8')
     hf.close()
+
     net = DeepTrainer(model_from_json(model_config, custom_objects=custom_layers))
 
     # Then load model parameters
