@@ -13,13 +13,13 @@ try:
     from evolutron.engine import DeepTrainer
     from evolutron.tools import load_dataset, Handle, shape
     from evolutron.motifs import motif_extraction
-    from evolutron.networks import custom_layers
+    from evolutron.templates import custom_layers
 except ImportError:
     sys.path.insert(0, os.path.abspath('../Evolutron'))
     from evolutron.engine import DeepTrainer
     from evolutron.tools import load_dataset, Handle, shape
     from evolutron.motifs import motif_extraction
-    from evolutron.networks import custom_layers
+    from evolutron.templates import custom_layers
 
 
 def main(filename, data_id):

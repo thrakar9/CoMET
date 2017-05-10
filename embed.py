@@ -16,19 +16,19 @@ from sklearn.manifold import TSNE
 
 try:
     from evolutron.engine import DeepTrainer
-    from evolutron.networks import custom_layers
+    from evolutron.templates import custom_layers
     from evolutron.tools import aa2hot, Handle, load_dataset, shape, file_db
     from evolutron.tools.data_tools import pad_or_clip_seq
 except ImportError:
 
     sys.path.insert(0, os.path.abspath('../Evolutron'))
     from evolutron.engine import DeepTrainer
-    from evolutron.networks import custom_layers
+    from evolutron.templates import custom_layers
     from evolutron.tools import aa2hot, Handle, load_dataset, shape, file_db
     from evolutron.tools.data_tools import pad_or_clip_seq
 
 
-def calculate_embeddings(model, proteins=None):
+def calculate_embeddings(model, proteins):
     handle = Handle.from_filename(model)
 
     # Load model architecture, build model and then load trained weights.
@@ -36,9 +36,6 @@ def calculate_embeddings(model, proteins=None):
         model_config = hf.attrs['model_config'].decode('utf8')
     net = DeepTrainer(model_from_json(model_config, custom_objects=custom_layers))
     net.load_all_param_values(model)
-
-    if not proteins:
-        proteins = pd.read_hdf(file_db[handle.dataset].split('.')[0] + '.h5', 'raw_data')
 
     x_data = proteins.sequence.apply(aa2hot).tolist()
     max_aa = net.input._keras_shape[1]
@@ -50,32 +47,36 @@ def calculate_embeddings(model, proteins=None):
 
     emb = np.asarray([embed_fun([[x]]) for x in x_data]).squeeze()
 
-    foldername = 'embeddings/' + handle.dataset + '/'
+    foldername = 'embeddings/' + handle.data_id + '/'
     if not os.path.exists(foldername):
         os.makedirs(foldername)
     np.savez(foldername + handle.filename.split('.')[0] + '.embed.npz', emb)
     return emb
 
 
-def main(model, tsne=True, html=True, pdf=False, pca=False):
+def main(model, tsne=True, html=False, pdf=False, pca=False):
     handle = Handle.from_filename(model)
 
     try:
-        with np.load('embeddings/' + handle.dataset + '/' + handle.filename.split('.')[0] + '.embed.npz') as f:
+        proteins = pd.read_hdf(file_db[handle.data_id].split('.')[0] + '.h5', 'raw_data')
+    except KeyError:
+        proteins = pd.read_hdf('/data/datasets/' + handle.data_id + '.h5', 'raw_data')
+
+    try:
+        with np.load('embeddings/' + handle.data_id + '/' + handle.filename.split('.')[0] + '.embed.npz') as f:
             emb = f['arr_0']
         print('Loaded embeddings')
 
     except IOError:
-        emb = calculate_embeddings(model)
+        emb = calculate_embeddings(model, proteins)
         print('Generated embeddings')
 
-    proteins = pd.read_hdf(file_db[handle.dataset].split('.')[0] + '.h5', 'raw_data')
     embeddings = pd.DataFrame(emb, index=proteins.index, columns=['Emb{}'.format(i) for i in range(emb.shape[1])])
     assert (len(embeddings) == len(proteins))
 
     # proteins = proteins.sample(n=max).reset_index(drop=True)
 
-    fam = proteins['fam'].astype('category')
+    fam = proteins['family'].astype('category')
 
     all_fams = fam.cat.categories.tolist()
 
@@ -87,36 +88,36 @@ def main(model, tsne=True, html=True, pdf=False, pca=False):
     emb[high_values_ind] = 1.
     if tsne:
         try:
-            with np.load('embeddings/' + handle.dataset + '/' + handle.filename.split('.')[0] + '.Y.embed.npz') as f:
+            with np.load('embeddings/' + handle.data_id + '/' + handle.filename.split('.')[0] + '.Y.embed.npz') as f:
                 Y = f['arr_0']
             print('Loaded TSNE of embeddings')
-        except IOError:
+        except FileNotFoundError:
             tsne = TSNE(n_components=2, verbose=2, metric='hamming', n_iter=1000, n_iter_without_progress=200)
-            Y = tsne.fit_transform(emb)
-            np.savez('embeddings/' + handle.dataset + '/' + handle.filename.split('.')[0] + '.Y.embed.npz', Y)
+            Y = tsne.fit_transform(emb[np.random.choice(emb.shape[0], 20000, replace=False), :])
+            np.savez('embeddings/' + handle.data_id + '/' + handle.filename.split('.')[0] + '.Y.embed.npz', Y)
             print('Generated TSNE of embeddings')
 
     if pca:
         try:
-            with np.load('embeddings/' + handle.dataset + '/' + handle.filename.split('.')[0] + '.PCA.embed.npz') as f:
+            with np.load('embeddings/' + handle.data_id + '/' + handle.filename.split('.')[0] + '.PCA.embed.npz') as f:
                 pca = f['arr_0']
             print('Loaded PCA of embeddings')
-        except IOError:
+        except FileNotFoundError:
             pca_model = PCA(n_components=min(emb.shape[1], 30))
             pca = pca_model.fit_transform(emb)
-            np.savez('embeddings/' + handle.dataset + '/' + handle.filename.split('.')[0] + '.PCA.embed.npz', pca)
+            np.savez('embeddings/' + handle.data_id + '/' + handle.filename.split('.')[0] + '.PCA.embed.npz', pca)
             print('Generated PCA of embeddings')
 
         try:
-            with np.load('embeddings/' + handle.dataset + '/' + handle.filename.split('.')[0] +
+            with np.load('embeddings/' + handle.data_id + '/' + handle.filename.split('.')[0] +
                                  '.Y_PCA.embed.npz') as f:
                 Y_PCA = f['arr_0']
             print('Loaded TSNE of PCA of embeddings')
 
-        except IOError:
+        except FileNotFoundError:
             tsne = TSNE(n_components=2, random_state=0, verbose=1)
             Y_PCA = tsne.fit_transform(pca)
-            np.savez('embeddings/' + handle.dataset + '/' + handle.filename.split('.')[0] + '.Y_PCA.embed.npz', Y_PCA)
+            np.savez('embeddings/' + handle.data_id + '/' + handle.filename.split('.')[0] + '.Y_PCA.embed.npz', Y_PCA)
             print('Generated TSNE of PCA of embeddings')
 
     print('done')
@@ -129,7 +130,7 @@ def main(model, tsne=True, html=True, pdf=False, pca=False):
     # def fn(obj):
     #     return obj.loc[np.random.choice(obj.index, size, replace), :]
 
-    sample = table.groupby('fam', as_index=True).mean()
+    sample = table.groupby('family', as_index=True).mean()
     print(len(sample))
     if len(sample) > 1000:
         sample = sample.sample(n=500)
@@ -164,10 +165,10 @@ def main(model, tsne=True, html=True, pdf=False, pca=False):
         proteins['tsn2'] = pd.Series(Y[:, 1], index=proteins.index)
         proteins['fam'] = proteins['fam'].str.replace('family', '')
         server_media = '/Users/thrakar9/Desktop/repo/EvolutronServer/media'
-        proteins.to_csv(server_media + '/embeds/' + handle.dataset + '_' + handle.filename.split('.')[0] + '.csv',
+        proteins.to_csv(server_media + '/embeds/' + handle.data_id + '_' + handle.filename.split('.')[0] + '.csv',
                         columns=['protein_names', 'fam', 'sup', 'sub', 'tsn1', 'tsn2', 'labels'])
 
-        with open(server_media + '/embeds/' + handle.dataset + '_' + handle.filename.split('.')[0] + '.tree', 'w') as f:
+        with open(server_media + '/embeds/' + handle.data_id + '_' + handle.filename.split('.')[0] + '.tree', 'w') as f:
             f.write(newick)
 
 
@@ -189,12 +190,12 @@ def main(model, tsne=True, html=True, pdf=False, pca=False):
 
         fig, ax = plt.subplots()
         ax.scatter(Y[:, 0], Y[:, 1], c=colors)
-        ax.set_title(handle.dataset + ' #fam {0}'.format(len(all_fams)))
+        ax.set_title(handle.data_id + ' #fam {0}'.format(len(all_fams)))
         # plt.xlim([-10, 10])
         # plt.ylim([-10, 10])
         # for label, x, y in zip(vocabulary, Y[:, 0], Y[:, 1]):
         #     plt.annotate(label, xy=(x, y), xytext=(0, 0), textcoords='offset points')
-        fig.savefig('show/{0}_{1}_{2}'.format(handle.dataset, handle.filters, handle.filter_size) +
+        fig.savefig('show/{0}_{1}_{2}'.format(handle.data_id, handle.filters, handle.filter_size) +
                     '_Y.pdf', dpi=500, facecolor='w', edgecolor='w')
 
 

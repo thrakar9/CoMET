@@ -24,12 +24,11 @@ import keras.backend as K
 try:
     from evolutron.motifs import motif_extraction
     from evolutron.tools import load_dataset, none2str, Handle, shape, get_args
-    from evolutron.engine import DeepTrainer
 except ImportError:
     sys.path.insert(0, os.path.abspath('../Evolutron'))
     from evolutron.motifs import motif_extraction
     from evolutron.tools import load_dataset, none2str, Handle, shape, get_args
-    from evolutron.engine import DeepTrainer
+    from evolutron.templates import callback_templates as cb
 
 import nets
 
@@ -39,6 +38,7 @@ np.random.seed(seed)
 
 def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10, validation=.2,
            optimizer='nadam', rate=.01, conv=1, fc=1, model=None, motifs=True):
+    # TODO: be able to submit train and test files separately
     # Find input shape
     x_data, y_data = dataset
     if type(x_data) == np.ndarray:
@@ -53,29 +53,33 @@ def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10
     output_dim = y_data.shape[1]
 
     if model:
-        conv_net = DeepTrainer(nets.DeepCoFAM.from_saved_model(model))
+        # conv_net = DeepTrainer(nets.DeepCoFAM.from_saved_model(model))
+        conv_net = None
+        # TODO: implement load model
         print('Loaded model')
     else:
         print('Building model ...')
-        net_arch = nets.DeepCoFAM.from_options(input_shape,
-                                               output_dim,
-                                               n_conv_layers=conv,
-                                               n_fc_layers=fc,
-                                               n_filters=filters,
-                                               filter_length=filter_length)
-        handle.model = net_arch.name
-        conv_net = DeepTrainer(net_arch, classification=True)
-        conv_net.compile(optimizer=optimizer, lr=rate)
+        conv_net = nets.build_cofam_model(input_shape,
+                                          output_dim,
+                                          n_conv_layers=conv,
+                                          n_fc_layers=fc,
+                                          filters=filters,
+                                          filter_length=filter_length,
+                                          optimizer=optimizer,
+                                          lr=rate)
+
+    handle.model = conv_net.name
 
     conv_net.display_network_info()
 
-    print('Started training at {}'.format(time.asctime()))
+    callbacks = cb.standard(patience=20, reduce_factor=.05)
 
+    print('Started training at {}'.format(time.asctime()))
     conv_net.fit(x_data, y_data,
                  epochs=epochs,
                  batch_size=batch_size,
-                 validate=validation,
-                 patience=20)
+                 validation_split=validation,
+                 callbacks=callbacks)
 
     conv_net.save_train_history(handle)
     conv_net.save_model_to_file(handle)
@@ -107,30 +111,31 @@ def unsupervised(dataset, handle, epochs=1, batch_size=1, filters=30, filter_len
         raise TypeError('Something went wrong with the dataset type')
 
     if model:
-        net_arch = nets.DeepCoDER.from_handle(input_shape, handle)
-        conv_net = DeepTrainer(net_arch)
-        conv_net.load_all_param_values(model)
+        conv_net = None
+        # TODO: implement load model
         print('Loaded model')
     else:
         print('Building model ...')
-        net_arch = nets.DeepCoDER.from_options(input_shape,
-                                               n_conv_layers=conv,
-                                               n_fc_layers=fc,
-                                               n_filters=filters,
-                                               filter_length=filter_length)
-        handle.model = net_arch.name
-        conv_net = DeepTrainer(net_arch)
-
-    conv_net.compile(optimizer=optimizer, lr=rate)
+        conv_net = nets.build_coder_model(input_shape,
+                                          n_conv_layers=conv,
+                                          n_fc_layers=fc,
+                                          filters=filters,
+                                          filter_length=filter_length,
+                                          optimizer=optimizer,
+                                          lr=rate)
+    handle.model = conv_net.name
     conv_net.display_network_info()
+
+    callbacks = cb.standard(patience=20, reduce_factor=.05)
 
     print('Started training at {}'.format(time.asctime()))
 
     conv_net.fit(x_data, x_data,
                  epochs=epochs,
                  batch_size=batch_size,
-                 validate=validation,
-                 patience=20)
+                 validation_split=validation,
+                 callbacks=callbacks)
+
     conv_net.save_train_history(handle)
     conv_net.save_model_to_file(handle)
 
@@ -159,13 +164,13 @@ def main(mode, **options):
 
     # Load the dataset
     print("Loading data...")
-    dataset_options = get_args(options, ['data_id', 'padded'])
+    dataset_options = get_args(options, ['data_id', 'padded', 'infile'])
 
     if mode == 'unsupervised' or handle.model == 'DeepCoDER':
         dataset = load_dataset(**dataset_options)
         unsupervised(dataset, handle, **options)
     elif mode == 'family' or handle.model == 'DeepCoFAM':
-        dataset = load_dataset(**dataset_options, codes=True, code_key='fam')
+        dataset = load_dataset(**dataset_options, codes=True, code_key=options.pop('key', 'fam'))
         family(dataset, handle, **options)
     else:
         raise IOError('Invalid mode of operation.')
@@ -183,6 +188,12 @@ if __name__ == '__main__':
 
     parser.add_argument("filter_length", type=int,
                         help='Size of filters in the first convolutional layer.')
+
+    parser.add_argument("--infile", "-i",
+                        help='The protein dataset file to be trained on. Only if data_id = file')
+
+    parser.add_argument("--key",
+                        help='The key to use for codes.')
 
     parser.add_argument("--no_pad", action='store_true',
                         help='Toggle to pad protein sequences. Batch size auto-change to 1.')
@@ -222,5 +233,8 @@ if __name__ == '__main__':
     if hasattr(args, 'model'):
         kwargs.pop('filters')
         kwargs.pop('filter_length')
+
+    if args.data_id == 'file' and not hasattr(args, 'infile'):
+        raise argparse.ArgumentError('Data id is set to "file", but no --path options. Call with -h for help.')
 
     main(**kwargs)

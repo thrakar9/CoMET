@@ -17,7 +17,7 @@ def transfer(x_data_un, x_data_su, y_data, pad_size, handle,
 
     conv_unsuper.display_network_info()
 
-    conv_unsuper.fit(x_data_un, x_data_un, num_epochs, validate=validation, holdout=holdout)
+    conv_unsuper.fit(x_data_un, x_data_un, num_epochs, validation_split=validation, holdout=holdout)
     conv_unsuper.save_train_history(handle)
     conv_unsuper.save_model_to_file(handle)
 
@@ -37,7 +37,7 @@ def transfer(x_data_un, x_data_su, y_data, pad_size, handle,
     conv_super.display_network_info()
     conv_super.set_conv_param_values(conv_unsuper.get_conv_param_values())
 
-    conv_super.fit(x_data_su, y_data, num_epochs, validate=validation, holdout=holdout)
+    conv_super.fit(x_data_su, y_data, num_epochs, validation_split=validation, holdout=holdout)
     conv_super.save_train_history(handle)
     conv_super.save_model_to_file(handle)
 
@@ -65,7 +65,7 @@ def supervised(x_data, y_data, pad_size, handle,
     if model:
         conv_net.set_all_param_values(model)
         conv_net.load_train_history(model.split('.')[0])
-    conv_net.fit(x_data, y_data, epochs, validate=validation, holdout=holdout)
+    conv_net.fit(x_data, y_data, epochs, validation_split=validation, holdout=holdout)
     conv_net.save_train_history(handle)
     conv_net.save_model_to_file(handle)
 
