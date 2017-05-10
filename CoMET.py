@@ -82,7 +82,7 @@ def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10
                  callbacks=callbacks)
 
     conv_net.save_train_history(handle)
-    conv_net.save_model_to_file(handle)
+    conv_net.save(handle)
 
     # Extract the motifs from the convolutional layers
     if motifs:
@@ -137,7 +137,7 @@ def unsupervised(dataset, handle, epochs=1, batch_size=1, filters=30, filter_len
                  callbacks=callbacks)
 
     conv_net.save_train_history(handle)
-    conv_net.save_model_to_file(handle)
+    conv_net.save(handle)
 
     # Extract the motifs from the convolutional layers
     if motifs:
