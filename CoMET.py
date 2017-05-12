@@ -36,8 +36,17 @@ seed = 7
 np.random.seed(seed)
 
 
-def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10, validation=.2,
-           optimizer='nadam', rate=.01, conv=1, fc=1, model=None, motifs=True):
+def family(dataset, handle,  model=None,
+           motifs=True,
+           epochs=1,
+           batch_size=1,
+           filters=30,
+           filter_length=10,
+           validation=.2,
+           optimizer='nadam',
+           rate=.01,
+           conv=1,
+           fc=1):
     # TODO: be able to submit train and test files separately
     # Find input shape
     x_data, y_data = dataset
@@ -53,9 +62,7 @@ def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10
     output_dim = y_data.shape[1]
 
     if model:
-        # conv_net = DeepTrainer(nets.DeepCoFAM.from_saved_model(model))
-        conv_net = None
-        # TODO: implement load model
+        conv_net = nets.build_cofam_model(saved_model=model)
         print('Loaded model')
     else:
         print('Building model ...')
@@ -68,10 +75,6 @@ def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10
                                           optimizer=optimizer,
                                           lr=rate)
 
-    handle.model = conv_net.name
-
-    conv_net.display_network_info()
-
     callbacks = cb.standard(patience=20, reduce_factor=.05)
 
     print('Started training at {}'.format(time.asctime()))
@@ -81,6 +84,7 @@ def family(dataset, handle, epochs=1, batch_size=1, filters=30, filter_length=10
                  validation_split=validation,
                  callbacks=callbacks)
 
+    handle.model = conv_net.name
     conv_net.save_train_history(handle)
     conv_net.save(handle)
 
@@ -111,8 +115,7 @@ def unsupervised(dataset, handle, epochs=1, batch_size=1, filters=30, filter_len
         raise TypeError('Something went wrong with the dataset type')
 
     if model:
-        conv_net = None
-        # TODO: implement load model
+        conv_net = nets.build_coder_model(saved_model=model)
         print('Loaded model')
     else:
         print('Building model ...')
