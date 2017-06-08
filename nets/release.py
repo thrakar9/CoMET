@@ -128,8 +128,14 @@ def build_coder_model(input_shape=None, filters=10, filter_length=10, n_conv_lay
     return model
 
 
-def build_cofam_model(input_shape=None, output_dim=None, filters=10, filter_length=10, n_conv_layers=1, n_fc_layers=1,
+def build_cofam_model(input_shape=None, output_dim=None,
+                      filters=None, filter_length=None, n_conv_layers=1, n_fc_layers=1,
                       optimizer='sgd', lr=.001, saved_model=None):
+    if not filters:
+        filters = [10]
+    if not filter_length:
+        filter_length = [10]
+
     if saved_model:
         model = load_model(saved_model, custom_objects=custom_layers, compile=False)
         model.classification = True
@@ -148,8 +154,8 @@ def build_cofam_model(input_shape=None, output_dim=None, filters=10, filter_leng
 
         # Convolutional Layers
         # First
-        convs = [BatchNormalization()(Convolution1D(filters=filters,
-                                                    kernel_size=filter_length,
+        convs = [BatchNormalization()(Convolution1D(filters=filters[0],
+                                                    kernel_size=filter_length[0],
                                                     strides=1,
                                                     kernel_initializer='glorot_uniform',
                                                     activation='relu',
@@ -158,14 +164,15 @@ def build_cofam_model(input_shape=None, output_dim=None, filters=10, filter_leng
                                                     name='Conv1')(inp))]
         # Middle
         for c in range(1, n_conv_layers):
-            convs.append(Convolution1D(filters=filters,
-                                       kernel_size=filter_length,
-                                       strides=1,
-                                       kernel_initializer='glorot_uniform',
-                                       activation='relu',
-                                       use_bias=False,
-                                       padding='same',
-                                       name='Conv{}'.format(c + 1))(convs[-1]))  # maybe add L1 regularizer
+            convs.append(BatchNormalization()(Convolution1D(filters=filters[c],
+                                                            kernel_size=filter_length[c],
+                                                            strides=1,
+                                                            kernel_initializer='glorot_uniform',
+                                                            activation='relu',
+                                                            use_bias=False,
+                                                            padding='same',
+                                                            name='Conv{}'.format(c + 1))(
+                    convs[-1])))  # maybe add L1 regularizer
 
         # Max-pooling
         if seq_length:
@@ -177,13 +184,13 @@ def build_cofam_model(input_shape=None, output_dim=None, filters=10, filter_leng
             raise NotImplementedError('Sequence length must be known at this point. Pad and use mask.')
 
         # Fully-Connected encoding layers
-        fc_enc = [Dense(filters,
+        fc_enc = [Dense(filters[-1],
                         kernel_initializer='glorot_uniform',
                         activation='relu',
                         name='FCEnc1')(flat)]
 
         for d in range(1, n_fc_layers):
-            fc_enc.append(Dense(filters,
+            fc_enc.append(Dense(filters[-1],
                                 kernel_initializer='glorot_uniform',
                                 activation='relu',
                                 name='FCEnc{}'.format(d + 1))(fc_enc[-1]))

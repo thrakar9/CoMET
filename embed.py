@@ -171,7 +171,6 @@ def main(model, tsne=True, html=False, pdf=False, pca=False):
         with open(server_media + '/embeds/' + handle.data_id + '_' + handle.filename.split('.')[0] + '.tree', 'w') as f:
             f.write(newick)
 
-
     # colors = []
     # for voc in vocabulary:
     #
