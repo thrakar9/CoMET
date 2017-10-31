@@ -2,6 +2,7 @@
 motifs/
 models/
 embeddings/
+scripts/
 
 .ipynb_checkpoints/
 logs/

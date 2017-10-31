@@ -1,0 +1,6 @@
+h5py
+scikit-learn
+pandas
+keras
+biopython
+tables
