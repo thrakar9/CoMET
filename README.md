@@ -30,3 +30,5 @@ git clone https://github.mit.edu/karydis/CoMET.git ~/.evolutron
    ```shell
    python CoMET.py dnabind 200 100 --mode family -e 200 --conv 1 --fc 1
    ```
+
+[ describe motif extraction ]
