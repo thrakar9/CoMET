@@ -9,11 +9,15 @@ At the core of CoMET is a Deep Convolutional Encoder. Two exemplary network arch
 ## Install CoMET
 
 ### Clone Evolutron and add it to the path
+```
 git clone https://github.mit.edu/karydis/Evolutron.git ~/.evolutron
 echo "export PATH=~/.evolutron/:$PATH"
+```
 
 ### Clone CoMET
+```
 git clone https://github.mit.edu/karydis/CoMET.git ~/.evolutron
+```
 
 ## How to train CoMET models
 
