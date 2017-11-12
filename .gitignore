@@ -2,14 +2,12 @@
 motifs/
 models/
 embeddings/
-scripts/
+notebooks/
 
-.ipynb_checkpoints/
 logs/
 
 # Pycharm specific
 .idea/
-
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

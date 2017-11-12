@@ -2,41 +2,32 @@
 # coding=utf-8
 """
     CoMET - Convolutional Motif Extraction Tool
-    ------------------------------------------_
+    -------------------------------------------
     CoMET is an automated tool for the discovery of protein motifs from arbitrarily
     large protein sequence datasets.
 
-    (c) Massachusetts Institute of Technology
+    (c) 2015-2017 Massachusetts Institute of Technology
 
     For more information contact:
     karydis [at] mit.edu
 """
 import argparse
-import os
-import sys
 import time
 
+import keras.backend as K
 import numpy as np
 from keras.utils.np_utils import to_categorical
-import keras.backend as K
-
-# Check if package is installed, else fallback to developer mode imports
-try:
-    from evolutron.motifs import motif_extraction
-    from evolutron.tools import load_dataset, none2str, Handle, shape, get_args
-except ImportError:
-    sys.path.insert(0, os.path.abspath('../Evolutron'))
-    from evolutron.motifs import motif_extraction
-    from evolutron.tools import load_dataset, none2str, Handle, shape, get_args
-    from evolutron.templates import callback_templates as cb
 
 import nets
+from evolutron.motifs import motif_extraction
+from evolutron.templates import callback_templates as cb
+from evolutron.tools import Handle, get_args, load_dataset
 
 seed = 7
 np.random.seed(seed)
 
 
-def family(dataset, handle,  model=None,
+def family(dataset, handle, model=None,
            motifs=True,
            epochs=1,
            batch_size=1,

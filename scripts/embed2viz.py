@@ -2,7 +2,6 @@
 
 import argparse
 import os
-import sys
 
 import h5py
 import keras.backend as K
@@ -14,18 +13,10 @@ from scipy.cluster.hierarchy import fclusterdata
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
-try:
-    from evolutron.engine import DeepTrainer
-    from evolutron.templates import custom_layers
-    from evolutron.tools import aa2hot, Handle, load_dataset, shape, file_db
-    from evolutron.tools.data_tools import pad_or_clip_seq
-except ImportError:
-
-    sys.path.insert(0, os.path.abspath('../Evolutron'))
-    from evolutron.engine import DeepTrainer
-    from evolutron.templates import custom_layers
-    from evolutron.tools import aa2hot, Handle, load_dataset, shape, file_db
-    from evolutron.tools.data_tools import pad_or_clip_seq
+from evolutron.engine import Model
+from evolutron.extra_layers import custom_layers
+from evolutron.tools import Handle, aa2hot, file_db
+from evolutron.tools.data_tools import pad_or_clip_seq
 
 
 def calculate_embeddings(model, proteins):
@@ -34,7 +25,7 @@ def calculate_embeddings(model, proteins):
     # Load model architecture, build model and then load trained weights.
     with h5py.File(model) as hf:
         model_config = hf.attrs['model_config'].decode('utf8')
-    net = DeepTrainer(model_from_json(model_config, custom_objects=custom_layers))
+    net = Model(model_from_json(model_config, custom_objects=custom_layers))
     net.load_all_param_values(model)
 
     x_data = proteins.sequence.apply(aa2hot).tolist()
