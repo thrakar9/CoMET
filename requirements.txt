@@ -1,10 +1,22 @@
+# ----------------
+# Math, storage etc
+# ----------------
 numpy
-h5py
-scikit-learn
 pandas
+jupyter
+h5py
+tables
+tabulate
+matplotlib
+# ----------------
+# Machine Learning
+# ----------------
+scikit-learn
 keras
 tensorflow
-biopython
-tables
+# ----------------
+# Biology
+# ----------------
 biopandas
-
+biopython
+weblogo

@@ -1,11 +1,8 @@
-import os
-import sys
 import glob
-import psycopg2
 
 import numpy as np
+import psycopg2
 
-sys.path.insert(0, os.path.abspath('../Evolutron'))
 from evolutron.tools import Handle
 
 
@@ -72,19 +69,20 @@ def update_db():
     with conn.cursor() as cur:
 
         args_str = b','.join(
-                cur.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", x) for x in values if not filename_exists(cur, x[0]))
+                cur.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", x) for x in values if
+                not filename_exists(cur, x[0]))
 
         cur.execute(
                 b"INSERT INTO comet_models (model, filters, kernel_size, epochs, dataset, filename, "
                 b"fc_layers, conv_layers, loss, acc, val_loss,val_acc) VALUES " + args_str +
                 b" ON CONFLICT (filename) DO UPDATE SET val_loss = EXCLUDED.val_loss, val_acc = EXCLUDED.val_acc")
 
-
         conn.commit()
 
     conn.close()
 
-        # TODO: implement check for deleted files
+    # TODO: implement check for deleted files
+
 
 if __name__ == '__main__':
     update_db()
