@@ -1,9 +1,8 @@
 """
-    Implementation of a Convolutional Autoencoder
-    in Keras.
+    Implementation of CoMET in Keras.
 
     Thrasyvoulos Karydis
-    (c) Massachusetts Institute of Technology 2016
+    (c) Massachusetts Institute of Technology 2016-2017
 
     This work may be reproduced, modified, distributed, performed, and
     displayed for any purpose, but must acknowledge the mods
@@ -12,18 +11,16 @@
     liability.
 """
 import keras.backend as K
-from keras.layers import Convolution1D, MaxPooling1D, Dense, Flatten, Reshape
-from keras.layers import Input
 from keras.layers import BatchNormalization
-from evolutron.extra_layers import Dedense, Upsampling1D, Deconvolution1D, custom_layers
-
-from keras.metrics import categorical_accuracy
-from evolutron.extra_metrics import mean_cat_acc
-
+from keras.layers import Convolution1D, Dense, Flatten, MaxPooling1D, Reshape
+from keras.layers import Input
 from keras.losses import categorical_crossentropy
-from evolutron.extra_objectives import masked_mse
+from keras.metrics import categorical_accuracy
 
 from evolutron.engine import Model, load_model
+from evolutron.extra_layers import Deconvolution1D, Dedense, Upsampling1D, custom_layers
+from evolutron.extra_metrics import mean_cat_acc
+from evolutron.extra_objectives import masked_mse
 
 
 def build_coder_model(input_shape=None, filters=10, filter_length=10, n_conv_layers=1, n_fc_layers=1,
