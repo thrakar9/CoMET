@@ -23,12 +23,12 @@ git clone https://github.mit.edu/karydis/CoMET.git ~/.evolutron
 
 ### Unsupervised Mode (CoDER) Example:
    ```shell
-   python CoMET.py dnabind 200 100 -e 200 --conv 1 --fc 1
+   python CoMET.py -i example/uniprot_cas9.tsv --filters 200 --filter_length 30 -e 200 --conv 1 --fc 1
    ```
 
 ### Supervised Mode (CoFAM) Example:
    ```shell
-   python CoMET.py dnabind 200 100 --mode family -e 200 --conv 1 --fc 1
+   python CoMET.py --mode family -i example/uniprot_cas9.tsv --filters 200 --filter_length 30 -e 200 --conv 1 --fc 1
    ```
 
 [ describe motif extraction ]

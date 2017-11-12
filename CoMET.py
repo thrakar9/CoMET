@@ -81,7 +81,6 @@ def family(dataset, handle, model=None,
 
     # Extract the motifs from the convolutional layers
     if motifs:
-        # TODO: hide custom fun in deep trainer
         for depth, conv_layer in enumerate(conv_net.get_conv_layers()):
             conv_scores = conv_layer.output
             # Compile function that spits out the outputs of the correct convolutional layer
@@ -135,7 +134,6 @@ def unsupervised(dataset, handle, epochs=1, batch_size=1, filters=30, filter_len
 
     # Extract the motifs from the convolutional layers
     if motifs:
-        # TODO: hide custom fun in deep trainer
         for depth, conv_layer in enumerate(conv_net.get_conv_layers()):
             conv_scores = conv_layer.output
             # Compile function that spits out the outputs of the correct convolutional layer
@@ -158,7 +156,7 @@ def main(mode, **options):
 
     # Load the dataset
     print("Loading data...")
-    dataset_options = get_args(options, ['data_id', 'padded', 'infile'])
+    dataset_options = get_args(options, ['padded', 'infile'])
 
     if mode == 'unsupervised' or handle.model == 'DeepCoDER':
         dataset = load_dataset(**dataset_options)
@@ -174,17 +172,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='CoMET - Convolutional Motif Embeddings Tool',
                                      argument_default=argparse.SUPPRESS)
 
-    parser.add_argument("data_id",
-                        help='The protein dataset to be trained on.')
-
-    parser.add_argument("filters", type=int,
+    parser.add_argument("--filters", "-nf", type=int,
                         help='Number of filters in the convolutional layers.')
 
-    parser.add_argument("filter_length", type=int,
+    parser.add_argument("--filter_length", "-fl", type=int,
                         help='Size of filters in the first convolutional layer.')
 
     parser.add_argument("--infile", "-i",
-                        help='The protein dataset file to be trained on. Only if data_id = file')
+                        help='The protein dataset file to be trained on.')
 
     parser.add_argument("--key",
                         help='The key to use for codes.')
@@ -227,8 +222,5 @@ if __name__ == '__main__':
     if hasattr(args, 'model'):
         kwargs.pop('filters')
         kwargs.pop('filter_length')
-
-    if args.data_id == 'file' and not hasattr(args, 'infile'):
-        raise argparse.ArgumentError('Data id is set to "file", but no --path options. Call with -h for help.')
 
     main(**kwargs)
