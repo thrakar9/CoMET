@@ -172,10 +172,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='CoMET - Convolutional Motif Embeddings Tool',
                                      argument_default=argparse.SUPPRESS)
 
-    parser.add_argument("--filters", "-nf", type=int,
+    parser.add_argument("--filters", "-nf", type=int, nargs='+',
                         help='Number of filters in the convolutional layers.')
 
-    parser.add_argument("--filter_length", "-fl", type=int,
+    parser.add_argument("--filter_length", "-fl", type=int, nargs='+',
                         help='Size of filters in the first convolutional layer.')
 
     parser.add_argument("--infile", "-i",

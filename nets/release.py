@@ -151,6 +151,8 @@ def build_cofam_model(input_shape=None, output_dim=None,
 
         # Convolutional Layers
         # First
+        print(filters)
+        print(filter_length)
         convs = [BatchNormalization()(Convolution1D(filters=filters[0],
                                                     kernel_size=filter_length[0],
                                                     strides=1,
