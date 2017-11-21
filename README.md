@@ -16,7 +16,7 @@ echo "export PATH=~/.evolutron/:$PATH"
 
 ### Clone CoMET
 ```
-git clone https://github.mit.edu/karydis/CoMET.git ~/.evolutron
+git clone https://github.com/mitmedialab/CoMET.git ~/.evolutron
 ```
 
 ## How to train CoMET models
