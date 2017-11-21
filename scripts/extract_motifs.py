@@ -1,25 +1,18 @@
 #!/usr/bin/env python
 
 import argparse
-import h5py
-import os
-import sys
 
-from keras.models import model_from_json
+import h5py
 import keras.backend as K
+from keras.models import model_from_json
+
+from evolutron.engine import Model as DeepTrainer
+from evolutron.extra_layers import custom_layers
+from evolutron.motifs import motif_extraction
+from evolutron.tools import Handle, load_dataset
+
 
 # Check if package is installed, else fallback to developer mode imports
-try:
-    from evolutron.engine import DeepTrainer
-    from evolutron.tools import load_dataset, Handle, shape
-    from evolutron.motifs import motif_extraction
-    from evolutron.templates import custom_layers
-except ImportError:
-    sys.path.insert(0, os.path.abspath('../Evolutron'))
-    from evolutron.engine import DeepTrainer
-    from evolutron.tools import load_dataset, Handle, shape
-    from evolutron.motifs import motif_extraction
-    from evolutron.templates import custom_layers
 
 
 def main(filename, data_id):
@@ -52,6 +45,7 @@ def main(filename, data_id):
         # Start visualizations
         motif_extraction(custom_fun, x_data, conv_layer.filters,
                          conv_layer.kernel_size[0], handle, depth)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Network visualization module.')
