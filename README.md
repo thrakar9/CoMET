@@ -10,7 +10,7 @@ At the core of CoMET is a Deep Convolutional Encoder. Two exemplary network arch
 
 ### Clone Evolutron and add it to the path
 ```
-git clone https://github.mit.edu/karydis/Evolutron.git ~/.evolutron
+git clone https://github.com/mitmedialab/Evolutron.git ~/.evolutron
 echo "export PATH=~/.evolutron/:$PATH"
 ```
 
