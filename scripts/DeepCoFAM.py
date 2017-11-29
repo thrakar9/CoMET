@@ -70,7 +70,7 @@ conv_net.fit(x_train, y_train,
              return_best_model=True)
 
 
-handle = Handle(conv=conv, fc=fc, filter_length=filter_length, filters=filters, data_id='uniprot_fam_g100_s100',
+handle = Handle(n_conv_layers=conv, n_fc_layers=fc, filter_length=filter_length, filters=filters, data_id='uniprot_fam_g100_s100',
                 model='DeepCoFAM')
 conv_net.save_train_history(handle)
 conv_net.save(handle)

@@ -77,6 +77,6 @@ conv_net.fit(x_train, y_train,
 
 # In[ ]:
 
-handle = Handle(conv=conv, fc=fc, filter_length=filter_length, filters=filters, data_id='uniprot_cas9', model='CoHST')
+handle = Handle(n_conv_layers=conv, n_fc_layers=fc, filter_length=filter_length, filters=filters, data_id='uniprot_cas9', model='CoHST')
 conv_net.save_train_history(handle)
 conv_net.save(handle)

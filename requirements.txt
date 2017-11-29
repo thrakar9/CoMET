@@ -8,6 +8,7 @@ h5py
 tables
 tabulate
 matplotlib
+absl-py
 # ----------------
 # Machine Learning
 # ----------------

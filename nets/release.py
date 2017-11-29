@@ -11,9 +11,8 @@
     liability.
 """
 import keras.backend as K
-from keras.layers import BatchNormalization
-from keras.layers import Convolution1D, Dense, Flatten, MaxPooling1D, Reshape
-from keras.layers import Input
+from absl import flags
+from keras.layers import BatchNormalization, Convolution1D, Dense, Flatten, Input, MaxPooling1D, Reshape
 from keras.losses import categorical_crossentropy
 from keras.metrics import categorical_accuracy
 
@@ -21,10 +20,14 @@ from evolutron.engine import Model, load_model
 from evolutron.extra_layers import Deconvolution1D, Dedense, Upsampling1D, custom_layers
 from evolutron.extra_metrics import mean_cat_acc
 from evolutron.extra_objectives import masked_mse
+from . import network_parameters
+
+flags.adopt_module_key_flags(network_parameters)
+
+FLAGS = flags.FLAGS
 
 
-def build_coder_model(input_shape=None, filters=10, filter_length=10, n_conv_layers=1, n_fc_layers=1,
-                      optimizer='sgd', lr=.001, saved_model=None):
+def build_coder_model(input_shape=None, saved_model=None):
     if saved_model:
         model = load_model(saved_model, custom_objects=custom_layers, compile=False)
     else:
@@ -39,16 +42,16 @@ def build_coder_model(input_shape=None, filters=10, filter_length=10, n_conv_lay
         inp = Input(shape=input_shape, name='aa_seq')
 
         # Convolutional Layers
-        convs = [Convolution1D(filters=filters,
-                               kernel_size=filter_length,
+        convs = [Convolution1D(filters=FLAGS.filters[0],
+                               kernel_size=FLAGS.filter_length[0],
                                kernel_initializer='glorot_uniform',
                                activation='relu',
                                padding='same',
                                name='Conv1')(inp)]
 
-        for c in range(1, n_conv_layers):
-            convs.append(Convolution1D(filters=filters,
-                                       kernel_size=filter_length,
+        for c in range(1, FLAGS.n_conv_layers):
+            convs.append(Convolution1D(filters=FLAGS.filters[c],
+                                       kernel_size=FLAGS.filter_length[c],
                                        kernel_initializer='glorot_uniform',
                                        activation='relu',
                                        padding='same',
@@ -64,13 +67,13 @@ def build_coder_model(input_shape=None, filters=10, filter_length=10, n_conv_lay
             raise NotImplementedError('Sequence length must be known at this point. Pad and use mask.')
 
         # Fully-Connected encoding layers
-        fc_enc = [Dense(filters,
+        fc_enc = [Dense(FLAGS.filters[-1],
                         kernel_initializer='glorot_uniform',
                         activation='sigmoid',
                         name='FCEnc1')(flat)]
 
-        for d in range(1, n_fc_layers):
-            fc_enc.append(Dense(filters,
+        for d in range(1, FLAGS.n_fc_layers):
+            fc_enc.append(Dense(FLAGS.filters,
                                 kernel_initializer='glorot_uniform',
                                 activation='sigmoid',
                                 name='FCEnc{}'.format(d + 1))(fc_enc[-1]))
@@ -80,9 +83,9 @@ def build_coder_model(input_shape=None, filters=10, filter_length=10, n_conv_lay
         # Fully-Connected decoding layers
         fc_dec = [Dedense(encoded._keras_history[0],
                           activation='linear',
-                          name='FCDec{}'.format(n_fc_layers))(encoded)]
+                          name='FCDec{}'.format(FLAGS.n_fc_layers))(encoded)]
 
-        for d in range(n_fc_layers - 2, -1, -1):
+        for d in range(FLAGS.n_fc_layers - 2, -1, -1):
             fc_dec.append(Dedense(fc_enc[d]._keras_history[0],
                                   activation='linear',
                                   name='FCDec{}'.format(d + 1))(fc_dec[-1]))
@@ -96,7 +99,7 @@ def build_coder_model(input_shape=None, filters=10, filter_length=10, n_conv_lay
         deconvs = [Upsampling1D(max_pool._keras_history[0].input_shape[1], name='Upsampling')(unflat)]
 
         # Deconvolution
-        for c in range(n_conv_layers - 1, 0, -1):
+        for c in range(FLAGS.n_conv_layers - 1, 0, -1):
             deconvs.append(Deconvolution1D(convs[c]._keras_history[0],
                                            activation='relu',
                                            name='Deconv{}'.format(c + 1))(deconvs[-1]))  # maybe add L1 regularizer
@@ -115,24 +118,17 @@ def build_coder_model(input_shape=None, filters=10, filter_length=10, n_conv_lay
 
     # Compilation
 
-    model.compile(optimizer=optimizer,
+    model.compile(optimizer=FLAGS.optimizer,
                   loss=losses,
                   metrics=metrics,
-                  lr=lr)
+                  lr=FLAGS.learning_rate)
 
     model.display_network_info()
 
     return model
 
 
-def build_cofam_model(input_shape=None, output_dim=None,
-                      filters=None, filter_length=None, n_conv_layers=1, n_fc_layers=1,
-                      optimizer='sgd', lr=.001, saved_model=None):
-    if not filters:
-        filters = [10]
-    if not filter_length:
-        filter_length = [10]
-
+def build_cofam_model(input_shape=None, output_dim=None, saved_model=None):
     if saved_model:
         model = load_model(saved_model, custom_objects=custom_layers, compile=False)
         model.classification = True
@@ -151,10 +147,8 @@ def build_cofam_model(input_shape=None, output_dim=None,
 
         # Convolutional Layers
         # First
-        print(filters)
-        print(filter_length)
-        convs = [BatchNormalization()(Convolution1D(filters=filters[0],
-                                                    kernel_size=filter_length[0],
+        convs = [BatchNormalization()(Convolution1D(filters=FLAGS.filters[0],
+                                                    kernel_size=FLAGS.filter_length[0],
                                                     strides=1,
                                                     kernel_initializer='glorot_uniform',
                                                     activation='relu',
@@ -162,9 +156,9 @@ def build_cofam_model(input_shape=None, output_dim=None,
                                                     padding='same',
                                                     name='Conv1')(inp))]
         # Middle
-        for c in range(1, n_conv_layers):
-            convs.append(BatchNormalization()(Convolution1D(filters=filters[c],
-                                                            kernel_size=filter_length[c],
+        for c in range(1, FLAGS.n_conv_layers):
+            convs.append(BatchNormalization()(Convolution1D(filters=FLAGS.filters[c],
+                                                            kernel_size=FLAGS.filter_length[c],
                                                             strides=1,
                                                             kernel_initializer='glorot_uniform',
                                                             activation='relu',
@@ -183,13 +177,13 @@ def build_cofam_model(input_shape=None, output_dim=None,
             raise NotImplementedError('Sequence length must be known at this point. Pad and use mask.')
 
         # Fully-Connected encoding layers
-        fc_enc = [Dense(filters[-1],
+        fc_enc = [Dense(FLAGS.filters[-1],
                         kernel_initializer='glorot_uniform',
                         activation='relu',
                         name='FCEnc1')(flat)]
 
-        for d in range(1, n_fc_layers):
-            fc_enc.append(Dense(filters[-1],
+        for d in range(1, FLAGS.n_fc_layers):
+            fc_enc.append(Dense(FLAGS.filters[-1],
                                 kernel_initializer='glorot_uniform',
                                 activation='relu',
                                 name='FCEnc{}'.format(d + 1))(fc_enc[-1]))
@@ -211,10 +205,10 @@ def build_cofam_model(input_shape=None, output_dim=None,
 
     # Compilation
 
-    model.compile(optimizer=optimizer,
+    model.compile(optimizer=FLAGS.optimizer,
                   loss=losses,
                   metrics=metrics,
-                  lr=lr)
+                  lr=FLAGS.learning_rate)
 
     model.display_network_info()
 
