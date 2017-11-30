@@ -22,7 +22,7 @@ git clone https://github.com/mitmedialab/CoMET.git ~/.evolutron
 ## How to train CoMET models
 
 CoMET options are parsed using [ABSL flags (former gflags)](https://github.com/google/python-gflags). 
-You can controlled them by command line arguments or configuration files (see example/example.conf).
+You can controll them by command line arguments or configuration files (see example/example.conf).
 
 ### Unsupervised Motif Extraction (CoDER) Example:
    ```shell
