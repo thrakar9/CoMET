@@ -21,14 +21,22 @@ git clone https://github.com/mitmedialab/CoMET.git ~/.evolutron
 
 ## How to train CoMET models
 
-### Unsupervised Mode (CoDER) Example:
+CoMET options are parsed using [ABSL flags (former gflags)](https://github.com/google/python-gflags). 
+You can controlled them by command line arguments or configuration files (see example/example.conf).
+
+### Unsupervised Motif Extraction (CoDER) Example:
    ```shell
-   python CoMET.py -i example/uniprot_cas9.tsv --filters 200 --filter_length 30 -e 200 --conv 1 --fc 1
+   python CoMET.py --flagfile example/example.conf --mode CoDER
    ```
 
-### Supervised Mode (CoFAM) Example:
+### Family Classification (CoFAM) Example:
    ```shell
-   python CoMET.py --mode family -i example/uniprot_cas9.tsv --filters 200 --filter_length 30 -e 200 --conv 1 --fc 1
+   python CoMET.py --flagfile example/example.conf --mode CoFAM
+   ```
+   
+### Binary Classification for Homology Search (CoHST) Example:
+   ```shell
+   python CoMET.py --flagfile example/example.conf --mode CoHST
    ```
 
-[ describe motif extraction ]
+[ TODO: describe motif extraction ]
