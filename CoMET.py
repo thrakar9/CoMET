@@ -29,6 +29,8 @@ seed = 7
 np.random.seed(seed)
 
 flags.DEFINE_string("infile", '', 'The protein dataset file to be trained on.')
+flags.DEFINE_string("cohst_neg_file", '', 'The protein dataset file to use as a negative set on CoHST')
+
 flags.DEFINE_string("key", 'fam', 'The key to use for codes.')
 flags.DEFINE_boolean("no_pad", False, 'Toggle to disable padding protein sequences. Batch size will auto-change to 1.')
 flags.DEFINE_enum("mode", 'CoDER', ['CoDER', 'CoFAM', 'CoHST'], 'The mode to train CoMET.')
@@ -205,7 +207,10 @@ def main():
         family(x_data, y_data, handle)
     elif FLAGS.mode == 'CoHST' or handle.model == 'CoHST':
         x_pos, _ = load_dataset(FLAGS.infile)
-        x_neg = load_random_aa_seqs(len(x_pos), x_pos.str.len().min(), x_pos.str.len().max())
+        if FLAGS.cohst_neg_file:
+            x_neg = load_dataset(FLAGS.cohst_neg_file)
+        else:
+            x_neg = load_random_aa_seqs(len(x_pos), x_pos.str.len().min(), x_pos.str.len().max())
         x_data = pd.concat((x_pos, x_neg), ignore_index=True)
         y_data = [1] * len(x_pos) + [0] * len(x_neg)
         x_data, y_data = preprocess_dataset(x_data, y_data, padded=not FLAGS.no_pad)
