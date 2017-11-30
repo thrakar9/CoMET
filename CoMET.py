@@ -208,7 +208,7 @@ def main():
     elif FLAGS.mode == 'CoHST' or handle.model == 'CoHST':
         x_pos, _ = load_dataset(FLAGS.infile)
         if FLAGS.cohst_neg_file:
-            x_neg = load_dataset(FLAGS.cohst_neg_file)
+            x_neg, _ = load_dataset(FLAGS.cohst_neg_file)
         else:
             x_neg = load_random_aa_seqs(len(x_pos), x_pos.str.len().min(), x_pos.str.len().max())
         x_data = pd.concat((x_pos, x_neg), ignore_index=True)
