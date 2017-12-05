@@ -15,6 +15,7 @@ from absl import flags
 from keras.layers import BatchNormalization, Convolution1D, Dense, Flatten, Input, MaxPooling1D, Reshape
 from keras.losses import binary_crossentropy, categorical_crossentropy
 from keras.metrics import binary_accuracy, categorical_accuracy
+from keras import regularizers
 
 from evolutron.engine import Model, load_model
 from evolutron.extra_layers import Deconvolution1D, Dedense, Upsampling1D, custom_layers
@@ -73,7 +74,7 @@ def build_coder_model(input_shape=None, saved_model=None):
                         name='FCEnc1')(flat)]
 
         for d in range(1, FLAGS.n_fc_layers):
-            fc_enc.append(Dense(FLAGS.filters,
+            fc_enc.append(Dense(FLAGS.filters[-1],
                                 kernel_initializer='glorot_uniform',
                                 activation='sigmoid',
                                 name='FCEnc{}'.format(d + 1))(fc_enc[-1]))
@@ -260,20 +261,18 @@ def build_cohst_model(input_shape=None, saved_model=None):
         # Fully-Connected encoding layers
         fc_enc = [Dense(FLAGS.filters[-1],
                         kernel_initializer='glorot_uniform',
-                        activation='relu',
+                        activation='relu', activity_regularizer=regularizers.l2(0.02),
                         name='FCEnc1')(flat)]
 
         for d in range(1, FLAGS.n_fc_layers):
             fc_enc.append(Dense(FLAGS.filters[-1],
                                 kernel_initializer='glorot_uniform',
-                                activation='relu',
+                                activation='relu', activity_regularizer=regularizers.l2(0.02),
                                 name='FCEnc{}'.format(d + 1))(fc_enc[-1]))
 
         encoded = fc_enc[-1]  # To access if model for encoding needed
 
-        classifier = Dense(1,
-                           kernel_initializer='glorot_uniform',
-                           activation='sigmoid',
+        classifier = Dense(1, activation='sigmoid',
                            name='Classifier')(encoded)
 
         model = Model(inputs=inp, outputs=classifier, name='CoHST', classification=True)

@@ -42,6 +42,10 @@ flags.DEFINE_float("validation_split", 0.2, "The fraction of data to use for cro
 flags.DEFINE_string("model", '', 'Continue training the given model. Other architecture options are unused.')
 
 flags.DEFINE_boolean("motifs", True, 'Toggle to enable/disable motif extraction.')
+flags.DEFINE_enum("motifs_filetype", 'png', ['png', 'pdf', 'txt'],
+                  'Choose between different file types to save the extracted motifs from CoMET.'
+                  'A typical workflow for subsequent analysis would be to extract the motifs as text files (txt) and'
+                  'then use the tool sites2meme to transform them to MEME format and submit for search in MAST.')
 
 flags.DEFINE_string("data_dir", '', 'The directory to store CoMET output data.')
 
@@ -64,8 +68,8 @@ def extract_motifs(x_data, conv_net, handle):
 
         custom_fun = K.function([conv_net.input], [conv_scores])
         # Start visualizations
-        motif_extraction(custom_fun, x_data, conv_layer.filters,
-                         conv_layer.kernel_size[0], handle, depth, data_dir=FLAGS.data_dir)
+        motif_extraction(custom_fun, x_data, conv_layer.filters, conv_layer.kernel_size[0], handle, depth,
+                         data_dir=FLAGS.data_dir, filetype=FLAGS.motifs_filetype)
 
 
 def binary(x_data, y_data, handle):
