@@ -21,7 +21,7 @@ git clone https://github.com/mitmedialab/CoMET.git
 
 ## How to train CoMET models
 
-CoMET options are parsed using [ABSL flags (former gflags)](https://github.com/google/python-gflags). 
+CoMET options are parsed using [ABSL flags (former gflags)](https://github.com/abseil/abseil-py). 
 You can controll them by command line arguments or configuration files (see example/example.conf).
 
 ### Unsupervised Motif Extraction (CoDER) Example:
