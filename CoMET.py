@@ -91,7 +91,7 @@ def binary(x_data, y_data, handle):
     handle.model = conv_net.name
     conv_net.display_network_info()
 
-    callbacks = cb.standard(patience=20, reduce_factor=.05)
+    callbacks = cb.standard(patience=FLAGS.patience, reduce_factor=FLAGS.reduce_factor)
 
     print('Started training at {}'.format(time.asctime()))
     conv_net.fit(x_data, y_data,
@@ -133,7 +133,7 @@ def family(x_data, y_data, handle):
     handle.model = conv_net.name
     conv_net.display_network_info()
 
-    callbacks = cb.standard(patience=20, reduce_factor=.05)
+    callbacks = cb.standard(patience=FLAGS.patience, reduce_factor=FLAGS.reduce_factor)
 
     print('Started training at {}'.format(time.asctime()))
     conv_net.fit(x_data, y_data,
@@ -169,7 +169,7 @@ def unsupervised(x_data, handle):
     handle.model = conv_net.name
     conv_net.display_network_info()
 
-    callbacks = cb.standard(patience=20, reduce_factor=.05)
+    callbacks = cb.standard(patience=FLAGS.patience, reduce_factor=FLAGS.reduce_factor)
 
     print('Started training at {}'.format(time.asctime()))
 

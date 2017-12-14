@@ -39,4 +39,10 @@ You can controll them by command line arguments or configuration files (see exam
    python CoMET.py --flagfile example/example.conf --mode CoHST
    ```
 
-[ TODO: describe motif extraction ]
+## Useful Scripts
+
+### Search for homologous protein sequences
+
+   ```shell
+   python search_for_homologs.py --infile /path/to/dataset --model_file=/path/to/trained/comet/model.model --output_file /path/to/output/file
+   ```
