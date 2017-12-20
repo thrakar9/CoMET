@@ -74,7 +74,7 @@ def main():
     if '.csv' not in FLAGS.output_file:
         FLAGS.output_file += '.csv'
 
-    output_folder = os.path.join(FLAGS.data_dir, 'homologs', model_key, dataset_key)
+    output_folder = os.path.join(FLAGS.data_dir, 'homologs', dataset_key, model_key)
 
     if not os.path.isdir(output_folder):
         os.makedirs(output_folder)

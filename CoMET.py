@@ -73,7 +73,7 @@ def extract_motifs(x_data, conv_net, handle):
         custom_fun = K.function([conv_net.input], [conv_scores])
         # Start visualizations
         motif_extraction(custom_fun, x_data, conv_layer.filters, conv_layer.kernel_size[0], handle, depth,
-                         data_dir=FLAGS.data_dir, filetype=FLAGS.motifs_filetype)
+                         filetype=FLAGS.motifs_filetype)
 
 
 def save_experiment(conv_net):
@@ -117,11 +117,13 @@ def binary(x_data, y_data, handle):
                  validation_split=FLAGS.validation_split,
                  callbacks=callbacks)
 
-    fkey = save_experiment(conv_net)
+    model_key = save_experiment(conv_net)
 
     # Extract the motifs from the convolutional layers
     if FLAGS.motifs:
-        extract_motifs(x_data, conv_net, fkey)
+        dataset_key = FLAGS.infile.split('/')[-1].split('.')[0]
+        output_folder = os.path.join(FLAGS.data_dir, 'motifs', dataset_key, model_key)
+        extract_motifs(x_data, conv_net, output_folder)
 
 
 def family(x_data, y_data, handle):
@@ -160,11 +162,13 @@ def family(x_data, y_data, handle):
                  validation_split=FLAGS.validation_split,
                  callbacks=callbacks)
 
-    fkey = save_experiment(conv_net)
+    model_key = save_experiment(conv_net)
 
     # Extract the motifs from the convolutional layers
     if FLAGS.motifs:
-        extract_motifs(x_data, conv_net, fkey)
+        dataset_key = FLAGS.infile.split('/')[-1].split('.')[0]
+        output_folder = os.path.join(FLAGS.data_dir, 'motifs', dataset_key, model_key)
+        extract_motifs(x_data, conv_net, output_folder)
 
 
 def unsupervised(x_data, handle):
@@ -198,11 +202,13 @@ def unsupervised(x_data, handle):
                  validation_split=FLAGS.validation_split,
                  callbacks=callbacks)
 
-    fkey = save_experiment(conv_net)
+    model_key = save_experiment(conv_net)
 
     # Extract the motifs from the convolutional layers
     if FLAGS.motifs:
-        extract_motifs(x_data, conv_net, fkey)
+        dataset_key = FLAGS.infile.split('/')[-1].split('.')[0]
+        output_folder = os.path.join(FLAGS.data_dir, 'motifs', dataset_key, model_key)
+        extract_motifs(x_data, conv_net, output_folder)
 
 
 def main():

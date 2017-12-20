@@ -80,7 +80,7 @@ def main():
     if '.npz' not in FLAGS.output_file:
         FLAGS.output_file += '.npz'
 
-    output_folder = os.path.join(FLAGS.data_dir, 'embeddings', model_key, dataset_key)
+    output_folder = os.path.join(FLAGS.data_dir, 'embeddings', dataset_key, model_key)
     if not os.path.isdir(output_folder):
         os.makedirs(output_folder)
 

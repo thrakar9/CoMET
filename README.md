@@ -63,7 +63,7 @@ This script works with any type of trained CoMET model, and produces the motif-e
 ```shell
 python scripts/generate_embeddings.py --infile /path/to/dataset.tsv --model_file=/path/to/model.model [--output_file output_filename]
 ```
-The output is saved at `embeddings/{model_ID}/dataset/{output_file}.npz`.
+The output is saved at `embeddings/dataset/{model_ID}/{output_file}.npz`.
       
 ### Extract motifs from protein sequences
 This script works with any type of trained CoMET model, and extracts sequence motifs from a set of input protein sequences, by looking at the receptive fields of the convolutional neurons.
@@ -74,11 +74,11 @@ python scripts/extract_motifs.py --infile /path/to/dataset.tsv --model_file=/pat
 
 The generated output file structure is the following:
 
-* {output_dir}/motifs/
-  * 1: The motifs of the first (closest to the input) convolutional layer.
-    * XX_YY.png: The motif extracted from neuron at position XX, from YY number of protein sequences.
-    * XX_YY.txt: The YY sequence patterns that activated the neuron XX in order to generate the motif.
-  * 2, 3, ...: The position of the next convolutional layers in the same structure as above.
+* `{output_dir}/motifs/dataset/{model_ID}/`
+  * `1/`: The motifs of the first (closest to the input) convolutional layer.
+    * `XX_YY.png`: The motif extracted from neuron at position XX, from YY number of protein sequences.
+    * `XX_YY.txt`: The YY sequence patterns that activated the neuron XX in order to generate the motif.
+  * `2/`, `3/`, ...: The position of the next convolutional layers in the same structure as above.
 
 ### Search for homologous protein sequences
 This script works with CoHST trained models, and scans a set of input protein sequences to identify sequence homologs to the protein dataset that was used as positive when training the model.
@@ -86,4 +86,4 @@ This script works with CoHST trained models, and scans a set of input protein se
 ```shell
 python scripts/search_for_homologs.py --infile /path/to/dataset --model_file=/path/to/model.model [--output_file output_filename]
 ```
-The output is saved at `homologs/{model_ID}/dataset/{output_file}.npz`.
+The output is saved at `homologs/dataset/{model_ID}/{output_file}.npz`.
