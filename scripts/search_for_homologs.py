@@ -12,7 +12,7 @@ from evolutron.tools import preprocess_dataset
 
 flags.DEFINE_string('infile', '', 'The input file. THe supported format currently is a TSV output from UniProt.', )
 flags.DEFINE_string('model_file', '', 'The model file for the model to use for predictions.')
-flags.DEFINE_string('output_file', '', 'The model file for the model to use for predictions.')
+flags.DEFINE_string('output_file', '', 'The output file in which to store the hits.')
 
 flags.DEFINE_string("data_dir", '', 'The directory to store CoMET output data.')
 
@@ -26,7 +26,7 @@ except flags.Error as e:
     sys.exit(1)
 
 
-class HSTSequence(Sequence):
+class UniProtSequence(Sequence):
 
     def __init__(self, dataframe, batch_size, max_dim):
         self.x = dataframe
@@ -45,20 +45,19 @@ class HSTSequence(Sequence):
 
 
 def main():
-
     m = load_model(FLAGS.model_file, custom_objects=custom_layers)
 
     data = pd.read_csv(FLAGS.infile, sep='\t')
 
-    hst_gen = HSTSequence(data, 100, m.input_shape[1])
+    data_gen = UniProtSequence(data, 100, m.input_shape[1])
 
-    preds = m.predict_generator(hst_gen, use_multiprocessing=True, workers=4)
+    preds = m.predict_generator(data_gen, use_multiprocessing=True, workers=4)
 
     data['comet_predictions'] = preds
 
     output = data[(data['comet_predictions'] > 0.5)]
 
-    output.to_csv(os.path.join(FLAGS.data_dir, 'comet/preds', FLAGS.output_file + '.csv'))
+    output.to_csv(os.path.join(FLAGS.data_dir, 'preds', FLAGS.output_file + '.csv'))
 
 
 if __name__ == "__main__":
