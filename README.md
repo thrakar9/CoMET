@@ -63,6 +63,7 @@ This script works with any type of trained CoMET model, and produces the motif-e
 ```shell
 python scripts/generate_embeddings.py --infile /path/to/dataset.tsv --model_file=/path/to/model.model [--output_file output_filename]
 ```
+The output is saved at `embeddings/{model_ID}/dataset/{output_file}.npz`.
       
 ### Extract motifs from protein sequences
 This script works with any type of trained CoMET model, and extracts sequence motifs from a set of input protein sequences, by looking at the receptive fields of the convolutional neurons.
@@ -85,3 +86,4 @@ This script works with CoHST trained models, and scans a set of input protein se
 ```shell
 python scripts/search_for_homologs.py --infile /path/to/dataset --model_file=/path/to/model.model [--output_file output_filename]
 ```
+The output is saved at `homologs/{model_ID}/dataset/{output_file}.npz`.

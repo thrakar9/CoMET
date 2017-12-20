@@ -15,8 +15,8 @@ from evolutron.tools import preprocess_dataset
 
 flags.DEFINE_string('infile', '', 'The input file. THe supported format currently is a TSV output from UniProt.', )
 flags.DEFINE_string('model_file', '', 'The model file for the model to use for predictions.')
-flags.DEFINE_string("data_dir", '', 'The directory to store CoMET output data.')
-flags.DEFINE_string('output_file', None, 'The output file in which to store the hits.')
+flags.DEFINE_string('output_file', 'embeddings.npz', 'The output file in which to store the hits.')
+flags.DEFINE_string("data_dir", os.path.expandvars(os.curdir), 'The directory to store output data.')
 
 FLAGS = flags.FLAGS
 
@@ -55,13 +55,7 @@ def calculate_embeddings(model, proteins, embed_foldername):
 
     emb = embedder.predict_generator(data_gen, use_multiprocessing=True, workers=4)
 
-    if not os.path.exists(embed_foldername):
-        os.makedirs(embed_foldername)
-
-    if not FLAGS.output_file:
-        np.savez(os.path.join(embed_foldername, 'embeddings.npz'), emb)
-    else:
-        np.savez(os.path.join(embed_foldername, FLAGS.output_file), emb)
+    np.savez(os.path.join(embed_foldername, FLAGS.output_file), emb)
 
 
 def main():
@@ -83,13 +77,14 @@ def main():
 
     model_key = FLAGS.model_file.split('/')[-1].split('.')[0]
 
-    if not FLAGS.output_file:
-        embed_foldername = os.path.join(FLAGS.data_dir, 'embeddings', model_key, dataset_key)
-    else:
-        embed_foldername = os.path.join(FLAGS.data_dir, 'embeddings')
+    if '.npz' not in FLAGS.output_file:
+        FLAGS.output_file += '.npz'
 
-    if not os.path.isfile(embed_foldername):
-        calculate_embeddings(model, proteins, embed_foldername)
+    output_folder = os.path.join(FLAGS.data_dir, 'embeddings', model_key, dataset_key)
+    if not os.path.isdir(output_folder):
+        os.makedirs(output_folder)
+
+    calculate_embeddings(model, proteins, output_folder)
 
 
 if __name__ == '__main__':

@@ -12,9 +12,9 @@ from evolutron.tools import preprocess_dataset
 
 flags.DEFINE_string('infile', '', 'The input file. THe supported format currently is a TSV output from UniProt.', )
 flags.DEFINE_string('model_file', '', 'The model file for the model to use for predictions.')
-flags.DEFINE_string('output_file', '', 'The output file in which to store the hits.')
+flags.DEFINE_string('output_file', 'homologs.csv', 'The output file in which to store the hits.')
 
-flags.DEFINE_string("data_dir", '', 'The directory to store CoMET output data.')
+flags.DEFINE_string("data_dir", os.path.expandvars(os.curdir), 'The directory to store CoMET output data.')
 
 FLAGS = flags.FLAGS
 
@@ -45,19 +45,41 @@ class UniProtSequence(Sequence):
 
 
 def main():
-    m = load_model(FLAGS.model_file, custom_objects=custom_layers)
+    try:
+        model = load_model(FLAGS.model_file, custom_objects=custom_layers)
+    except Exception as e:
+        print('Unable to load model.')
+        print(e)
+        sys.exit(1)
 
-    data = pd.read_csv(FLAGS.infile, sep='\t')
+    model_key = FLAGS.model_file.split('/')[-1].split('.')[0]
 
-    data_gen = UniProtSequence(data, 100, m.input_shape[1])
+    try:
+        proteins = pd.read_csv(FLAGS.infile, sep='\t')
+    except Exception as e:
+        print('Unable to read input protein dataset.')
+        print(e)
+        sys.exit(1)
 
-    preds = m.predict_generator(data_gen, use_multiprocessing=True, workers=4)
+    dataset_key = FLAGS.infile.split('/')[-1].split('.')[0]
 
-    data['comet_predictions'] = preds
+    data_gen = UniProtSequence(proteins, 100, model.input_shape[1])
 
-    output = data[(data['comet_predictions'] > 0.5)]
+    preds = model.predict_generator(data_gen, use_multiprocessing=True, workers=4)
 
-    output.to_csv(os.path.join(FLAGS.data_dir, 'preds', FLAGS.output_file + '.csv'))
+    proteins['comet_predictions'] = preds
+
+    output = proteins[(proteins['comet_predictions'] > 0.5)]
+
+    if '.csv' not in FLAGS.output_file:
+        FLAGS.output_file += '.csv'
+
+    output_folder = os.path.join(FLAGS.data_dir, 'homologs', model_key, dataset_key)
+
+    if not os.path.isdir(output_folder):
+        os.makedirs(output_folder)
+
+    output.to_csv(os.path.join(output_folder, FLAGS.output_file))
 
 
 if __name__ == "__main__":
