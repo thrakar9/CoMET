@@ -1,8 +1,4 @@
-# Visuals
-motifs/
-models/
-embeddings/
-notebooks/
+tests/output
 
 logs/
 
@@ -61,6 +57,3 @@ docs/_build/
 
 # PyBuilder
 target/
-
-confs/
-notebooks/
