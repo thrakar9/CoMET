@@ -10,9 +10,10 @@ At the core of CoMET is a Deep Convolutional Encoder. Two exemplary network arch
 
 ### Clone Evolutron and add it to the path
 ```
-git clone https://github.com/mitmedialab/Evolutron.git ~/.evolutron
-echo "export PATH=~/.evolutron/:$PATH"
+git clone https://github.com/mitmedialab/Evolutron.git $HOME/.evolutron
+echo "export PATH=$HOME/.evolutron/:$PATH"
 ```
+**WARNING: Evolutron is still under rapid development and CoMET is always updated to use the latest commit on master. Please pull the Evolutron repo immediatly after any update on the CoMET repo** 
 
 ### Clone CoMET
 ```
@@ -25,24 +26,62 @@ CoMET options are parsed using [ABSL flags (former gflags)](https://github.com/a
 You can control them by command line arguments or configuration files (see example/example.conf).
 
 ### Unsupervised Motif Extraction (CoDER) Example:
-   ```shell
-   python CoMET.py --flagfile example/example.conf --mode CoDER
-   ```
+```shell
+python CoMET.py --flagfile example/example.conf --mode CoDER
+```
 
 ### Family Classification (CoFAM) Example:
-   ```shell
-   python CoMET.py --flagfile example/example.conf --mode CoFAM
-   ```
+```shell
+python CoMET.py --flagfile example/example.conf --mode CoFAM
+```
    
 ### Binary Classification for Homology Search (CoHST) Example:
-   ```shell
-   python CoMET.py --flagfile example/example.conf --mode CoHST
-   ```
+```shell
+python CoMET.py --flagfile example/example.conf --mode CoHST
+```
+
+### Output Files Description
+CoMET generates output files in the directory given by the `data_dir` flag.
+
+Each experiment (run) is assigned a unique random ID, by which you can identify the network architecture, 
+the trained model, the training history and the flags used.
+
+The generated output file structure is the following:
+
+* models/
+  * ID.model: The saved Evolutron (Keras) model.
+  * ID.flags: The flags' values dictionary pickled with dill.
+  * ID.arch: The architecture of the network saved as a JSON config file.
+  * ID.history.npz: The training history saved as a Numpy compressed file.
 
 ## Useful Scripts
+Here is a list of scripts that you can use to apply CoMET models to protein sequence datasets.
+
+### Generate Embeddings from protein sequences
+This script works with any type of trained CoMET model, and produces the motif-embeddings of the input protein sequences.
+
+```shell
+python scripts/generate_embeddings.py --infile /path/to/dataset.tsv --model_file=/path/to/model.model [--output_file output_filename]
+```
+      
+### Extract motifs from protein sequences
+This script works with any type of trained CoMET model, and extracts sequence motifs from a set of input protein sequences, by looking at the receptive fields of the convolutional neurons.
+
+```shell
+python scripts/extract_motifs.py --infile /path/to/dataset.tsv --model_file=/path/to/model.model [--output_dir output_foldername]
+```
+
+The generated output file structure is the following:
+
+* {output_dir}/motifs/
+  * 1: The motifs of the first (closest to the input) convolutional layer.
+    * XX_YY.png: The motif extracted from neuron at position XX, from YY number of protein sequences.
+    * XX_YY.txt: The YY sequence patterns that activated the neuron XX in order to generate the motif.
+  * 2, 3, ...: The position of the next convolutional layers in the same structure as above.
 
 ### Search for homologous protein sequences
+This script works with CoHST trained models, and scans a set of input protein sequences to identify sequence homologs to the protein dataset that was used as positive when training the model.
 
-   ```shell
-   python search_for_homologs.py --infile /path/to/dataset --model_file=/path/to/trained/comet/model.model --output_file /path/to/output/file
-   ```
+```shell
+python scripts/search_for_homologs.py --infile /path/to/dataset --model_file=/path/to/model.model [--output_file output_filename]
+```
