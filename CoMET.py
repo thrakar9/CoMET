@@ -11,9 +11,11 @@
     For more information contact:
     karydis [at] mit.edu
 """
+import os
 import sys
 import time
 
+import dill
 import keras.backend as K
 import numpy as np
 import pandas as pd
@@ -25,14 +27,16 @@ from evolutron.motifs import motif_extraction
 from evolutron.templates import callback_templates as cb
 from evolutron.tools import Handle, load_dataset, load_random_aa_seqs, preprocess_dataset
 
-seed = 7
-np.random.seed(seed)
-
 flags.DEFINE_string("infile", '', 'The protein dataset file to be trained on.')
 flags.DEFINE_string("cohst_neg_file", '', 'The protein dataset file to use as a negative set on CoHST')
 
 flags.DEFINE_string("key", 'fam', 'The key to use for codes.')
 flags.DEFINE_boolean("no_pad", False, 'Toggle to disable padding protein sequences. Batch size will auto-change to 1.')
+flags.DEFINE_integer("pad_length", None, 'The max length to use for proteins in the dataset.')
+flags.DEFINE_integer("dataset_size", None, 'The number of samples to use. If None, dataset_fraction=1.0 will be used.')
+flags.DEFINE_float("dataset_fraction", 1.0,
+                   'The fraction of the dataset to use. Option is overwritten if dataset_size is set.')
+
 flags.DEFINE_enum("mode", 'CoDER', ['CoDER', 'CoFAM', 'CoHST'], 'The mode to train CoMET.')
 flags.DEFINE_integer("epochs", 50, 'The number of training epochs to perform.', lower_bound=1)
 flags.DEFINE_integer("batch_size", 50, 'The size of the mini-batch.', lower_bound=1)
@@ -42,7 +46,7 @@ flags.DEFINE_float("validation_split", 0.2, "The fraction of data to use for cro
 flags.DEFINE_string("model", '', 'Continue training the given model. Other architecture options are unused.')
 
 flags.DEFINE_boolean("motifs", True, 'Toggle to enable/disable motif extraction.')
-flags.DEFINE_enum("motifs_filetype", 'png', ['png', 'pdf', 'txt'],
+flags.DEFINE_enum("motifs_filetype", 'txt+png', ['png', 'pdf', 'txt', 'txt+pdf', 'txt+png'],
                   'Choose between different file types to save the extracted motifs from CoMET.'
                   'A typical workflow for subsequent analysis would be to extract the motifs as text files (txt) and'
                   'then use the tool sites2meme to transform them to MEME format and submit for search in MAST.')
@@ -72,12 +76,25 @@ def extract_motifs(x_data, conv_net, handle):
                          data_dir=FLAGS.data_dir, filetype=FLAGS.motifs_filetype)
 
 
+def save_experiment(conv_net):
+    file_key = str(np.random.randint(10 ** 9, 10 ** 10))
+
+    conv_net.save_train_history(file_key, data_dir=FLAGS.data_dir)
+    conv_net.save(file_key, data_dir=FLAGS.data_dir)
+    conv_net.save_architecture(file_key, data_dir=FLAGS.data_dir)
+    dill.dump(FLAGS.flag_values_dict(),
+              open(os.path.join(FLAGS.data_dir, 'models', file_key + '.flags'), 'wb'))
+    return file_key
+
+
 def binary(x_data, y_data, handle):
     # Find input shape
     if type(x_data) == np.ndarray:
         input_shape = x_data[0].shape
+        FLAGS.pad_length = x_data[0].shape[0]
     elif type(x_data) == list:
         input_shape = (None, x_data[0].shape[1])
+        FLAGS.pad_length = -1
     else:
         raise TypeError('Something went wrong with the dataset type')
 
@@ -100,12 +117,11 @@ def binary(x_data, y_data, handle):
                  validation_split=FLAGS.validation_split,
                  callbacks=callbacks)
 
-    conv_net.save_train_history(handle, data_dir=FLAGS.data_dir)
-    conv_net.save(handle, data_dir=FLAGS.data_dir)
+    fkey = save_experiment(conv_net)
 
     # Extract the motifs from the convolutional layers
     if FLAGS.motifs:
-        extract_motifs(x_data, conv_net, handle)
+        extract_motifs(x_data, conv_net, fkey)
 
 
 def family(x_data, y_data, handle):
@@ -113,8 +129,10 @@ def family(x_data, y_data, handle):
     # Find input shape
     if type(x_data) == np.ndarray:
         input_shape = x_data[0].shape
+        FLAGS.pad_length = x_data[0].shape[0]
     elif type(x_data) == list:
         input_shape = (None, x_data[0].shape[1])
+        FLAGS.pad_length = -1
     else:
         raise TypeError('Something went wrong with the dataset type')
 
@@ -142,20 +160,21 @@ def family(x_data, y_data, handle):
                  validation_split=FLAGS.validation_split,
                  callbacks=callbacks)
 
-    conv_net.save_train_history(handle, data_dir=FLAGS.data_dir)
-    conv_net.save(handle, data_dir=FLAGS.data_dir)
+    fkey = save_experiment(conv_net)
 
     # Extract the motifs from the convolutional layers
     if FLAGS.motifs:
-        extract_motifs(x_data, conv_net, handle)
+        extract_motifs(x_data, conv_net, fkey)
 
 
 def unsupervised(x_data, handle):
     # Find input shape
     if type(x_data) == np.ndarray:
         input_shape = x_data[0].shape
+        FLAGS.pad_length = x_data[0].shape[0]
     elif type(x_data) == list:
         input_shape = (None, x_data[0].shape[1])
+        FLAGS.pad_length = -1
     else:
         raise TypeError('Something went wrong with the dataset type')
 
@@ -179,12 +198,11 @@ def unsupervised(x_data, handle):
                  validation_split=FLAGS.validation_split,
                  callbacks=callbacks)
 
-    conv_net.save_train_history(handle, data_dir=FLAGS.data_dir)
-    conv_net.save(handle, data_dir=FLAGS.data_dir)
+    fkey = save_experiment(conv_net)
 
     # Extract the motifs from the convolutional layers
     if FLAGS.motifs:
-        extract_motifs(x_data, conv_net, handle)
+        extract_motifs(x_data, conv_net, fkey)
 
 
 def main():
@@ -204,10 +222,12 @@ def main():
     if FLAGS.mode == 'CoDER' or handle.model == 'CoDER':
         x_data, _ = load_dataset(FLAGS.infile)
         x_data = preprocess_dataset(x_data, padded=not FLAGS.no_pad)
+        FLAGS.dataset_size = len(x_data)
         unsupervised(x_data, handle)
     elif FLAGS.mode == 'CoFAM' or handle.model == 'CoFAM':
         x_data, y_data = load_dataset(FLAGS.infile, codes=True, code_key=FLAGS.key)
         x_data, y_data = preprocess_dataset(x_data, y_data, padded=not FLAGS.no_pad)
+        FLAGS.dataset_size = len(x_data)
         family(x_data, y_data, handle)
     elif FLAGS.mode == 'CoHST' or handle.model == 'CoHST':
         x_pos, _ = load_dataset(FLAGS.infile)
@@ -218,6 +238,7 @@ def main():
         x_data = pd.concat((x_pos, x_neg), ignore_index=True)
         y_data = [1] * len(x_pos) + [0] * len(x_neg)
         x_data, y_data = preprocess_dataset(x_data, y_data, padded=not FLAGS.no_pad)
+        FLAGS.dataset_size = len(x_data)
         binary(x_data, y_data, handle)
     else:
         raise IOError('Invalid mode of operation.')
